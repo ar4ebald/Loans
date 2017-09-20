@@ -14,6 +14,10 @@ namespace Loans.Controllers
             "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
         };
 
+        /// <summary>
+        /// Example XML description
+        /// </summary>
+        /// <returns></returns>
         [HttpGet("[action]")]
         public IEnumerable<WeatherForecast> WeatherForecasts()
         {
