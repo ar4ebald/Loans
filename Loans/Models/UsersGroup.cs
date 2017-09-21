@@ -2,7 +2,7 @@
 
 namespace Loans.Models
 {
-    class UsersGroup
+    public class UsersGroup
     {
         public int Id { get; set; }
 

@@ -2,7 +2,7 @@
 
 namespace Loans.Models
 {
-    class Loan
+    public class Loan
     {
         [Required]
         public ApplicationUser Borrower { get; set; }

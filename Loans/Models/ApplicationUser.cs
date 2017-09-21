@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Loans.Models
 {
-    class ApplicationUser : IdentityUser<int>
+    public class ApplicationUser : IdentityUser<int>
     {
         public string FirstName { get; set; }
         public string LastName { get; set; }
@@ -20,7 +20,7 @@ namespace Loans.Models
         public ICollection<Loan> Debtors { get; set; }
     }
 
-    class ApplicationRole : IdentityRole<int>
+    public class ApplicationRole : IdentityRole<int>
     {
     }
 }

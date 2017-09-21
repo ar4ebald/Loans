@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Loans.Models
 {
-    class LoansDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, int>
+    public class LoansDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, int>
     {
         public DbSet<UsersGroup> UsersGroups { get; set; }
         public DbSet<Requisite> Requisites { get; set; }

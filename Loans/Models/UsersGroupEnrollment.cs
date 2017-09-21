@@ -2,7 +2,7 @@
 
 namespace Loans.Models
 {
-    class UsersGroupEnrollment
+    public class UsersGroupEnrollment
     {
         [Required]
         public ApplicationUser User { get; set; }
