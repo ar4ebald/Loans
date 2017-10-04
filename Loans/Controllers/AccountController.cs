@@ -2,12 +2,10 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
-using System.Text;
 using System.Threading.Tasks;
 using Loans.DataTransferObjects;
 using Loans.Models;
 using Loans.Options;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -28,22 +26,10 @@ namespace Loans.Controllers
             _signInManager = signInManager;
         }
 
-        [HttpGet("random")]
-        public int Random()
-        {
-            return new Random().Next();
-        }
-
-        [Authorize, HttpGet("random2")]
-        public int Random2()
-        {
-            return new Random().Next();
-        }
-
         [Authorize, HttpGet("current")]
         public IActionResult GetCurrent()
         {
-            return Json(User.Identity.Name);
+            return Json(User.Claims.Select(i => new { i.Type, i.Value }));
         }
 
         [HttpPost("register")]
@@ -80,6 +66,7 @@ namespace Loans.Controllers
             [FromServices] IOptions<JwtSettings> settings,
             LoginViewModel model)
         {
+
             if (ModelState.IsValid)
             {
                 var user = await _userManager.FindByEmailAsync(model.Email);
@@ -89,12 +76,12 @@ namespace Loans.Controllers
 
                     if (result.Succeeded)
                     {
-                        var claims = await _userManager.GetClaimsAsync(user);
-                        //var claims = new[]
-                        //{
-                        //    new Claim(JwtRegisteredClaimNames.Sub, user.Email),
-                        //    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                        //};
+                        Claim[] claims =
+                        {
+                            new Claim(ClaimTypes.Name, user.UserName),
+                            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                        };
 
                         var creds = new SigningCredentials(
                             settings.Value.SigningKey,

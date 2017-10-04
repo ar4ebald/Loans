@@ -18,23 +18,20 @@ namespace Loans.Models
         {
             base.OnModelCreating(builder);
 
-            builder.Entity<Loan>().HasKey(loan => new
-            {
-                loan.BorrowerId,
-                loan.DebtorId
-            });
+            builder.Entity<LoanSummary>()
+                .HasKey(summary => new { summary.FromId, summary.ToId });
 
-            builder.Entity<Loan>()
-                .HasOne(loan => loan.Debtor)
-                .WithMany(deptor => deptor.Borrowers)
-                .HasForeignKey(loan => loan.DebtorId)
+            builder.Entity<LoanSummary>()
+                .HasOne(summary => summary.From)
+                .WithMany(borrower => borrower.To)
+                .HasForeignKey(summary => summary.FromId)
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<Loan>()
-                .HasOne(loan => loan.Borrower)
-                .WithMany(borrower => borrower.Debtors)
-                .HasForeignKey(loan => loan.BorrowerId)
+            builder.Entity<LoanSummary>()
+                .HasOne(summary => summary.To)
+                .WithMany(borrower => borrower.From)
+                .HasForeignKey(summary => summary.ToId)
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Restrict);
 

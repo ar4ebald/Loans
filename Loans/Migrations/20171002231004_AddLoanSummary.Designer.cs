@@ -11,9 +11,10 @@ using System;
 namespace Loans.Migrations
 {
     [DbContext(typeof(LoansDbContext))]
-    partial class LoansDbContextModelSnapshot : ModelSnapshot
+    [Migration("20171002231004_AddLoanSummary")]
+    partial class AddLoanSummary
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

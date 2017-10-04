@@ -1,14 +1,11 @@
 using System;
-using System.IdentityModel.Tokens.Jwt;
 using System.IO;
-using System.Text;
-using System.Threading.Tasks;
 using Loans.Models;
 using Loans.Options;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SpaServices.Webpack;
 using Microsoft.EntityFrameworkCore;
@@ -64,7 +61,7 @@ namespace Loans
 
             services.AddAuthentication(options =>
             {
-                options.DefaultScheme = IdentityConstants.ApplicationScheme;
+                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             }).AddJwtBearer(options =>
@@ -77,14 +74,15 @@ namespace Loans
                 {
                     ValidateIssuer = true,
                     ValidateAudience = true,
-                    ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
+
+                    RequireExpirationTime = false,
+                    ValidateLifetime = false,
 
                     ValidIssuer = settings.ValidIssuer,
                     ValidAudience = settings.ValidAudience,
                     IssuerSigningKey = settings.SigningKey
                 };
-
             });
 
             services.AddMvc().AddJsonOptions(options =>
