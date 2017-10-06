@@ -25,11 +25,11 @@ namespace Loans.Controllers
         }
 
         [HttpGet("summary")]
-        public Task<LoanSummaryResponse> GetSummary()
+        public async Task<LoanSummaryResponse> GetSummary()
         {
             var userId = User.GetUserId();
 
-            return _context.Users
+            var response = await _context.Users
                 .Where(user => user.Id == userId)
                 .Select(user => new LoanSummaryResponse
                 {
@@ -55,6 +55,35 @@ namespace Loans.Controllers
                     })
                 })
                 .FirstOrDefaultAsync();
+
+            var creditorsById = response.Creditors.ToDictionary(i => i.User.Id);
+            var borrowersById = response.Borrowers.ToDictionary(i => i.User.Id);
+
+            foreach (var pair in borrowersById)
+            {
+                if (creditorsById.TryGetValue(pair.Key, out var summary))
+                {
+                    summary.Debt -= pair.Value.Debt;
+                }
+                else
+                {
+                    pair.Value.Debt = -pair.Value.Debt;
+                    creditorsById.Add(pair.Key, pair.Value);
+                }
+            }
+
+            return new LoanSummaryResponse
+            {
+                Creditors = creditorsById.Values.Where(i => i.Debt > 0),
+
+                Borrowers = creditorsById.Values
+                    .Where(i => i.Debt < 0)
+                    .Select(i =>
+                    {
+                        i.Debt = -i.Debt;
+                        return i;
+                    })
+            };
         }
 
         [HttpPost]
@@ -79,8 +108,25 @@ namespace Loans.Controllers
 
             if (summary == null)
             {
-                
+                summary = new LoanSummary
+                {
+                    BorrowerId = borrowerId,
+                    CreditorId = model.CreditorId
+                };
+
+                await _context.LoanSummaries.AddAsync(summary);
             }
+
+            summary.TotalDebt += model.Amount;
+
+            _context.Loans.Add(new Loan
+            {
+                Amount = model.Amount,
+                Description = model.Description,
+                Summary = summary
+            });
+
+            await _context.SaveChangesAsync();
 
             return Ok();
         }

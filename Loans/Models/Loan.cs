@@ -8,7 +8,6 @@ namespace Loans.Models
 
         [Required]
         public LoanSummary Summary { get; set; }
-        public int SummaryId { get; set; }
 
         public string Description { get; set; }
 
