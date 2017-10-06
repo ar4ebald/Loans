@@ -8,6 +8,7 @@ namespace Loans.Models
         public DbSet<UsersGroup> UsersGroups { get; set; }
         public DbSet<Requisite> Requisites { get; set; }
         public DbSet<Loan> Loans { get; set; }
+        public DbSet<LoanSummary> LoanSummaries { get; set; }
 
         public LoansDbContext(DbContextOptions<LoansDbContext> options)
             : base(options)
@@ -19,19 +20,19 @@ namespace Loans.Models
             base.OnModelCreating(builder);
 
             builder.Entity<LoanSummary>()
-                .HasKey(summary => new { summary.FromId, summary.ToId });
+                .HasKey(summary => new { FromId = summary.CreditorId, ToId = summary.BorrowerId });
 
             builder.Entity<LoanSummary>()
-                .HasOne(summary => summary.From)
-                .WithMany(borrower => borrower.To)
-                .HasForeignKey(summary => summary.FromId)
+                .HasOne(summary => summary.Creditor)
+                .WithMany(borrower => borrower.Borrowers)
+                .HasForeignKey(summary => summary.CreditorId)
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<LoanSummary>()
-                .HasOne(summary => summary.To)
-                .WithMany(borrower => borrower.From)
-                .HasForeignKey(summary => summary.ToId)
+                .HasOne(summary => summary.Borrower)
+                .WithMany(borrower => borrower.Creditors)
+                .HasForeignKey(summary => summary.BorrowerId)
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Restrict);
 
