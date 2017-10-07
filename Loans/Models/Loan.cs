@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace Loans.Models
 {
@@ -9,8 +10,10 @@ namespace Loans.Models
         [Required]
         public LoanSummary Summary { get; set; }
 
-        public string Description { get; set; }
-
         public long Amount { get; set; }
+
+        public DateTimeOffset Time { get; set; }
+
+        public string Description { get; set; }
     }
 }

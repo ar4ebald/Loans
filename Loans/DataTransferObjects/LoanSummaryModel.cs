@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace Loans.DataTransferObjects
 {
@@ -19,13 +15,13 @@ namespace Loans.DataTransferObjects
     {
         public UserModel User { get; set; }
 
-        public long Debt { get; set; }
+        public long TotalAmount { get; set; }
     }
 
     public class LoanSummaryResponse
     {
-        public IEnumerable<LoanSummaryModel> Creditors { get; set; }
+        public IEnumerable<LoanSummaryModel> Credits { get; set; }
 
-        public IEnumerable<LoanSummaryModel> Borrowers { get; set; }
+        public IEnumerable<LoanSummaryModel> Debts { get; set; }
     }
 }

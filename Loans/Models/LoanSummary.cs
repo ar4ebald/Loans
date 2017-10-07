@@ -10,13 +10,10 @@ namespace Loans.Models
         public int CreditorId { get; set; }
 
         [Required]
-        public ApplicationUser Borrower { get; set; }
-        public int BorrowerId { get; set; }
+        public ApplicationUser Debtor { get; set; }
+        public int DebtorId { get; set; }
 
-        /// <summary>
-        /// Total debt from <see cref="Creditor"/> to <see cref="Borrower"/>
-        /// </summary>
-        public long TotalDebt { get; set; }
+        public long TotalAmount { get; set; }
 
         public ICollection<Loan> Loans { get; set; }
     }

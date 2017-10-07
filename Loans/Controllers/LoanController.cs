@@ -33,7 +33,7 @@ namespace Loans.Controllers
                 .Where(user => user.Id == userId)
                 .Select(user => new LoanSummaryResponse
                 {
-                    Creditors = user.Creditors.Select(summary => new LoanSummaryModel
+                    Debts = user.Debts.Select(summary => new LoanSummaryModel
                     {
                         User = new UserModel
                         {
@@ -41,9 +41,9 @@ namespace Loans.Controllers
                             FirstName = user.FirstName,
                             LastName = user.LastName
                         },
-                        Debt = summary.TotalDebt
+                        TotalAmount = summary.TotalAmount
                     }),
-                    Borrowers = user.Borrowers.Select(summary => new LoanSummaryModel
+                    Credits = user.Credits.Select(summary => new LoanSummaryModel
                     {
                         User = new UserModel
                         {
@@ -51,79 +51,96 @@ namespace Loans.Controllers
                             FirstName = user.FirstName,
                             LastName = user.LastName
                         },
-                        Debt = summary.TotalDebt
+                        TotalAmount = summary.TotalAmount
                     })
                 })
                 .FirstOrDefaultAsync();
 
-            var creditorsById = response.Creditors.ToDictionary(i => i.User.Id);
-            var borrowersById = response.Borrowers.ToDictionary(i => i.User.Id);
+            var creditsById = response.Credits.ToDictionary(i => i.User.Id);
 
-            foreach (var pair in borrowersById)
+            foreach (LoanSummaryModel summary in response.Debts)
             {
-                if (creditorsById.TryGetValue(pair.Key, out var summary))
+                if (creditsById.TryGetValue(summary.User.Id, out var oldSummary))
                 {
-                    summary.Debt -= pair.Value.Debt;
+                    oldSummary.TotalAmount -= summary.TotalAmount;
                 }
                 else
                 {
-                    pair.Value.Debt = -pair.Value.Debt;
-                    creditorsById.Add(pair.Key, pair.Value);
+                    summary.TotalAmount = -summary.TotalAmount;
+                    creditsById.Add(summary.User.Id, summary);
                 }
             }
 
             return new LoanSummaryResponse
             {
-                Creditors = creditorsById.Values.Where(i => i.Debt > 0),
+                Credits = creditsById.Values.Where(i => i.TotalAmount > 0),
 
-                Borrowers = creditorsById.Values
-                    .Where(i => i.Debt < 0)
+                Debts = creditsById.Values
+                    .Where(i => i.TotalAmount < 0)
                     .Select(i =>
                     {
-                        i.Debt = -i.Debt;
+                        i.TotalAmount = -i.TotalAmount;
                         return i;
                     })
             };
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateLoan([FromBody]LoanCreateRequest model)
+        [HttpGet("user/{id}")]
+        public LoanHistoryResponse GetHistory(int id)
         {
-            var borrowerId = User.GetUserId();
+            var userId = User.GetUserId();
 
-            if (model.CreditorId == borrowerId)
+            return new LoanHistoryResponse
             {
-                return BadRequest("Can't create loan to yourself");
+                Credits = _context.Loans
+                    .Where(loan => loan.Summary.CreditorId == userId && loan.Summary.DebtorId == id)
+                    .Select(LoanModel.Select),
+
+                Debts = _context.Loans
+                .Where(loan => loan.Summary.DebtorId == userId && loan.Summary.CreditorId == id)
+                .Select(LoanModel.Select)
+            };
+        }
+
+        [HttpPost("user/{creditorId}")]
+        public async Task<IActionResult> CreateLoan(int creditorId, [FromBody]LoanCreateRequest model)
+        {
+            var debtorId = User.GetUserId();
+
+            if (creditorId == debtorId)
+            {
+                return BadRequest("Can't owe to yourself");
             }
 
-            if (await _context.Users.AllAsync(user => user.Id != model.CreditorId))
+            if (await _context.Users.AllAsync(user => user.Id != creditorId))
             {
                 return BadRequest("Invalid creditor");
             }
 
             LoanSummary summary = await _context.LoanSummaries
                 .FirstOrDefaultAsync(i =>
-                    i.CreditorId == model.CreditorId && i.BorrowerId == borrowerId
+                    i.CreditorId == creditorId && i.DebtorId == debtorId
                 );
 
             if (summary == null)
             {
                 summary = new LoanSummary
                 {
-                    BorrowerId = borrowerId,
-                    CreditorId = model.CreditorId
+                    CreditorId = creditorId,
+                    DebtorId = debtorId
                 };
 
                 await _context.LoanSummaries.AddAsync(summary);
             }
 
-            summary.TotalDebt += model.Amount;
+            summary.TotalAmount += model.Amount;
 
             _context.Loans.Add(new Loan
             {
+                Summary = summary,
                 Amount = model.Amount,
+                Time = DateTimeOffset.Now,
                 Description = model.Description,
-                Summary = summary
             });
 
             await _context.SaveChangesAsync();

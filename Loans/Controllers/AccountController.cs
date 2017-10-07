@@ -33,7 +33,7 @@ namespace Loans.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<ValidationResultModel> Register(RegisterViewModel model)
+        public async Task<ValidationResultModel> Register([FromBody]RegisterViewModel model)
         {
             if (ModelState.IsValid)
             {

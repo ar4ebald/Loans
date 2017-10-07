@@ -87,6 +87,7 @@ namespace Loans
 
             services.AddMvc().AddJsonOptions(options =>
             {
+                options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
                 options.SerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
             });
 

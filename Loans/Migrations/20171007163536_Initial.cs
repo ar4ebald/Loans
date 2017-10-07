@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Loans.Migrations
 {
-    public partial class InitialCreate : Migration
+    public partial class Initial : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -172,25 +172,24 @@ namespace Loans.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Loans",
+                name: "LoanSummaries",
                 columns: table => new
                 {
-                    BorrowerId = table.Column<int>(type: "int", nullable: false),
+                    CreditorId = table.Column<int>(type: "int", nullable: false),
                     DebtorId = table.Column<int>(type: "int", nullable: false),
-                    Amount = table.Column<long>(type: "bigint", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    TotalAmount = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Loans", x => new { x.BorrowerId, x.DebtorId });
+                    table.PrimaryKey("PK_LoanSummaries", x => new { x.CreditorId, x.DebtorId });
                     table.ForeignKey(
-                        name: "FK_Loans_AspNetUsers_BorrowerId",
-                        column: x => x.BorrowerId,
+                        name: "FK_LoanSummaries_AspNetUsers_CreditorId",
+                        column: x => x.CreditorId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Loans_AspNetUsers_DebtorId",
+                        name: "FK_LoanSummaries_AspNetUsers_DebtorId",
                         column: x => x.DebtorId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
@@ -241,6 +240,29 @@ namespace Loans.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Loans",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    Amount = table.Column<long>(type: "bigint", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    SummaryCreditorId = table.Column<int>(type: "int", nullable: false),
+                    SummaryDebtorId = table.Column<int>(type: "int", nullable: false),
+                    Time = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Loans", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Loans_LoanSummaries_SummaryCreditorId_SummaryDebtorId",
+                        columns: x => new { x.SummaryCreditorId, x.SummaryDebtorId },
+                        principalTable: "LoanSummaries",
+                        principalColumns: new[] { "CreditorId", "DebtorId" },
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -281,8 +303,13 @@ namespace Loans.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Loans_DebtorId",
+                name: "IX_Loans_SummaryCreditorId_SummaryDebtorId",
                 table: "Loans",
+                columns: new[] { "SummaryCreditorId", "SummaryDebtorId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LoanSummaries_DebtorId",
+                table: "LoanSummaries",
                 column: "DebtorId");
 
             migrationBuilder.CreateIndex(
@@ -324,6 +351,9 @@ namespace Loans.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "LoanSummaries");
 
             migrationBuilder.DropTable(
                 name: "UsersGroups");

@@ -11,8 +11,8 @@ using System;
 namespace Loans.Migrations
 {
     [DbContext(typeof(LoansDbContext))]
-    [Migration("20171006004522_AddLoanSummaries")]
-    partial class AddLoanSummaries
+    [Migration("20171007163536_Initial")]
+    partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -109,30 +109,30 @@ namespace Loans.Migrations
 
                     b.Property<string>("Description");
 
-                    b.Property<int>("SummaryFromId");
+                    b.Property<int>("SummaryCreditorId");
 
-                    b.Property<int>("SummaryId");
+                    b.Property<int>("SummaryDebtorId");
 
-                    b.Property<int>("SummaryToId");
+                    b.Property<DateTimeOffset>("Time");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SummaryFromId", "SummaryToId");
+                    b.HasIndex("SummaryCreditorId", "SummaryDebtorId");
 
                     b.ToTable("Loans");
                 });
 
             modelBuilder.Entity("Loans.Models.LoanSummary", b =>
                 {
-                    b.Property<int>("FromId");
+                    b.Property<int>("CreditorId");
 
-                    b.Property<int>("ToId");
+                    b.Property<int>("DebtorId");
 
-                    b.Property<long>("TotalDebt");
+                    b.Property<long>("TotalAmount");
 
-                    b.HasKey("FromId", "ToId");
+                    b.HasKey("CreditorId", "DebtorId");
 
-                    b.HasIndex("ToId");
+                    b.HasIndex("DebtorId");
 
                     b.ToTable("LoanSummaries");
                 });
@@ -263,20 +263,20 @@ namespace Loans.Migrations
                 {
                     b.HasOne("Loans.Models.LoanSummary", "Summary")
                         .WithMany("Loans")
-                        .HasForeignKey("SummaryFromId", "SummaryToId")
+                        .HasForeignKey("SummaryCreditorId", "SummaryDebtorId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("Loans.Models.LoanSummary", b =>
                 {
-                    b.HasOne("Loans.Models.ApplicationUser", "From")
-                        .WithMany("To")
-                        .HasForeignKey("FromId")
+                    b.HasOne("Loans.Models.ApplicationUser", "Creditor")
+                        .WithMany("Credits")
+                        .HasForeignKey("CreditorId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Loans.Models.ApplicationUser", "To")
-                        .WithMany("From")
-                        .HasForeignKey("ToId")
+                    b.HasOne("Loans.Models.ApplicationUser", "Debtor")
+                        .WithMany("Debts")
+                        .HasForeignKey("DebtorId")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 

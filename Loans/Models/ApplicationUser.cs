@@ -13,11 +13,11 @@ namespace Loans.Models
 
         public ICollection<UsersGroupEnrollment> Groups { get; set; }
 
-        [InverseProperty("Borrower")]
-        public ICollection<LoanSummary> Creditors { get; set; }
+        [InverseProperty("Debtor")]
+        public ICollection<LoanSummary> Debts { get; set; }
 
         [InverseProperty("Creditor")]
-        public ICollection<LoanSummary> Borrowers { get; set; }
+        public ICollection<LoanSummary> Credits { get; set; }
     }
 
     public class ApplicationRole : IdentityRole<int>

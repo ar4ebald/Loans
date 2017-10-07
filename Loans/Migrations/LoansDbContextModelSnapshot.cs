@@ -108,13 +108,15 @@ namespace Loans.Migrations
 
                     b.Property<string>("Description");
 
-                    b.Property<int>("SummaryBorrowerId");
-
                     b.Property<int>("SummaryCreditorId");
+
+                    b.Property<int>("SummaryDebtorId");
+
+                    b.Property<DateTimeOffset>("Time");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SummaryCreditorId", "SummaryBorrowerId");
+                    b.HasIndex("SummaryCreditorId", "SummaryDebtorId");
 
                     b.ToTable("Loans");
                 });
@@ -123,13 +125,13 @@ namespace Loans.Migrations
                 {
                     b.Property<int>("CreditorId");
 
-                    b.Property<int>("BorrowerId");
+                    b.Property<int>("DebtorId");
 
-                    b.Property<long>("TotalDebt");
+                    b.Property<long>("TotalAmount");
 
-                    b.HasKey("CreditorId", "BorrowerId");
+                    b.HasKey("CreditorId", "DebtorId");
 
-                    b.HasIndex("BorrowerId");
+                    b.HasIndex("DebtorId");
 
                     b.ToTable("LoanSummaries");
                 });
@@ -260,20 +262,20 @@ namespace Loans.Migrations
                 {
                     b.HasOne("Loans.Models.LoanSummary", "Summary")
                         .WithMany("Loans")
-                        .HasForeignKey("SummaryCreditorId", "SummaryBorrowerId")
+                        .HasForeignKey("SummaryCreditorId", "SummaryDebtorId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("Loans.Models.LoanSummary", b =>
                 {
-                    b.HasOne("Loans.Models.ApplicationUser", "Borrower")
-                        .WithMany("Creditors")
-                        .HasForeignKey("BorrowerId")
+                    b.HasOne("Loans.Models.ApplicationUser", "Creditor")
+                        .WithMany("Credits")
+                        .HasForeignKey("CreditorId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Loans.Models.ApplicationUser", "Creditor")
-                        .WithMany("Borrowers")
-                        .HasForeignKey("CreditorId")
+                    b.HasOne("Loans.Models.ApplicationUser", "Debtor")
+                        .WithMany("Debts")
+                        .HasForeignKey("DebtorId")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
