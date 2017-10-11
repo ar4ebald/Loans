@@ -7,10 +7,12 @@ using Loans.DataTransferObjects;
 using Loans.Models;
 using Loans.Options;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Loans.Controllers
 {
@@ -32,6 +34,8 @@ namespace Loans.Controllers
             return Json(User.Claims.Select(i => new { i.Type, i.Value }));
         }
 
+        [SwaggerResponse(StatusCodes.Status200OK)]
+        [SwaggerResponse(StatusCodes.Status400BadRequest)]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody]RegisterViewModel model)
         {
@@ -49,7 +53,7 @@ namespace Loans.Controllers
                 IdentityResult result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
-                    return Ok(ValidationResultModel.Success);
+                    return Ok();
                 }
 
                 foreach (IdentityError error in result.Errors)
@@ -58,15 +62,16 @@ namespace Loans.Controllers
                 }
             }
 
-            return BadRequest(new ValidationResultModel(ModelState));
+            return BadRequest(ModelState);
         }
 
+        [SwaggerResponse(StatusCodes.Status200OK)]
+        [SwaggerResponse(StatusCodes.Status400BadRequest)]
         [HttpPost("token")]
         public async Task<IActionResult> GenerateToken(
             [FromServices] IOptions<JwtSettings> settings,
             LoginViewModel model)
         {
-
             if (ModelState.IsValid)
             {
                 var user = await _userManager.FindByEmailAsync(model.Email);
@@ -96,14 +101,14 @@ namespace Loans.Controllers
                             signingCredentials: creds
                         );
 
-                        return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
+                        return Ok(new {token = new JwtSecurityTokenHandler().WriteToken(token)});
                     }
                 }
 
-                return BadRequest("Invalid email or password");
+                ModelState.AddModelError("Credentials", "Invalid email or password");
             }
 
-            return BadRequest("Could not create token");
+            return BadRequest(ModelState);
         }
     }
 }

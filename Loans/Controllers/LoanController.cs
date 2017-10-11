@@ -6,8 +6,10 @@ using Loans.DataTransferObjects.LoanSummary;
 using Loans.Extensions;
 using Loans.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Loans.Controllers
 {
@@ -101,6 +103,8 @@ namespace Loans.Controllers
             };
         }
 
+        [SwaggerResponse(StatusCodes.Status200OK)]
+        [SwaggerResponse(StatusCodes.Status400BadRequest)]
         [HttpPost("user/{creditorId}")]
         public async Task<IActionResult> CreateLoan(int creditorId, [FromBody]LoanCreateRequest model)
         {
@@ -108,12 +112,18 @@ namespace Loans.Controllers
 
             if (creditorId == debtorId)
             {
-                return BadRequest("Can't owe to yourself");
+                return BadRequest(new SerializableError
+                {
+                    ["Error"] = "You can't create a credit to yourself"
+                });
             }
 
             if (await _context.Users.AllAsync(user => user.Id != creditorId))
             {
-                return BadRequest("Invalid creditor");
+                return BadRequest(new SerializableError
+                {
+                    ["Error"] = "Invalid creditor"
+                });
             }
 
             LoanSummary summary = await _context.LoanSummaries
