@@ -25,6 +25,15 @@ namespace Loans.Controllers
             _context = context;
         }
 
+        /// <summary>
+        /// Returns loan summaries for current user
+        /// </summary>
+        /// <remarks>
+        /// Credits contains all summaries for users 
+        /// where their total debt to current user is greater 
+        /// than total debt from current
+        /// Debts is the opposite of above
+        /// </remarks>
         [HttpGet("summary")]
         public async Task<LoanSummaryResponse> GetSummary()
         {
@@ -86,6 +95,10 @@ namespace Loans.Controllers
             };
         }
 
+        /// <summary>
+        /// Returns all transactions history between current and specified users
+        /// </summary>
+        /// <param name="id">Target user id</param>
         [HttpGet("user/{id}")]
         public LoanHistoryResponse GetHistory(int id)
         {
@@ -103,6 +116,11 @@ namespace Loans.Controllers
             };
         }
 
+        /// <summary>
+        /// Creates new credit from specified to current user
+        /// </summary>
+        /// <param name="creditorId">Creditor identifier</param>
+        /// <param name="model">Credit model</param>
         [SwaggerResponse(StatusCodes.Status200OK)]
         [SwaggerResponse(StatusCodes.Status400BadRequest)]
         [HttpPost("user/{creditorId}")]

@@ -3,7 +3,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Loans.DataTransferObjects;
+using Loans.DataTransferObjects.Account;
 using Loans.Models;
 using Loans.Options;
 using Microsoft.AspNetCore.Authorization;
@@ -28,12 +28,19 @@ namespace Loans.Controllers
             _signInManager = signInManager;
         }
 
+        /// <summary>
+        /// Returns bearer token claims
+        /// </summary>
         [Authorize, HttpGet("current")]
         public IActionResult GetCurrent()
         {
             return Json(User.Claims.Select(i => new { i.Type, i.Value }));
         }
 
+        /// <summary>
+        /// Creates a new user
+        /// </summary>
+        /// <param name="model">New user view model</param>
         [SwaggerResponse(StatusCodes.Status200OK)]
         [SwaggerResponse(StatusCodes.Status400BadRequest)]
         [HttpPost("register")]
@@ -58,13 +65,17 @@ namespace Loans.Controllers
 
                 foreach (IdentityError error in result.Errors)
                 {
-                    ModelState.AddModelError("", error.Description);
+                    ModelState.AddModelError("Identity", error.Description);
                 }
             }
 
             return BadRequest(ModelState);
         }
 
+        /// <summary>
+        /// Authenticates using specified credentials
+        /// </summary>
+        /// <param name="model">Credentials</param>
         [SwaggerResponse(StatusCodes.Status200OK)]
         [SwaggerResponse(StatusCodes.Status400BadRequest)]
         [HttpPost("token")]
@@ -101,7 +112,7 @@ namespace Loans.Controllers
                             signingCredentials: creds
                         );
 
-                        return Ok(new {token = new JwtSecurityTokenHandler().WriteToken(token)});
+                        return Ok(new JwtSecurityTokenHandler().WriteToken(token));
                     }
                 }
 

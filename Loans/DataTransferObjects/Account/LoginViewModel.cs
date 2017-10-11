@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Loans.DataTransferObjects
+namespace Loans.DataTransferObjects.Account
 {
     public class LoginViewModel
     {

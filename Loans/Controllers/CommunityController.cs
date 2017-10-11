@@ -25,6 +25,10 @@ namespace Loans.Controllers
             _context = context;
         }
 
+        /// <summary>
+        /// Creates new community
+        /// </summary>
+        /// <param name="model">New community model</param>
         [SwaggerResponse(StatusCodes.Status200OK)]
         [SwaggerResponse(StatusCodes.Status400BadRequest)]
         [HttpPost]
@@ -49,6 +53,9 @@ namespace Loans.Controllers
             return BadRequest(ModelState);
         }
 
+        /// <summary>
+        /// Returns communities that contains current user
+        /// </summary>
         [HttpGet]
         public Task<IEnumerable<CommunityViewModel>> GetPersonalCommunities()
         {
