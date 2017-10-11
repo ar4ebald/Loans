@@ -81,7 +81,7 @@ namespace Loans.Controllers
         [HttpPost("token")]
         public async Task<IActionResult> GenerateToken(
             [FromServices] IOptions<JwtSettings> settings,
-            LoginViewModel model)
+            [FromBody]LoginViewModel model)
         {
             if (ModelState.IsValid)
             {
