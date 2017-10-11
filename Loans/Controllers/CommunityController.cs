@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Loans.DataTransferObjects;
 using Loans.DataTransferObjects.Community;
-using Loans.DataTransferObjects.UsersGroup;
 using Loans.Extensions;
 using Loans.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -71,6 +71,31 @@ namespace Loans.Controllers
                 .FirstOrDefaultAsync();
         }
 
+        //[HttpGet("{communityId}")]
+        //public async Task<IActionResult> Get(int communityId)
+        //{
+        //    var userId = User.GetIdentifier();
+
+        //    var result = await _context.Communities
+        //        .Where(community => community.Id == communityId &&
+        //                            community.Members.Any(enrollment => enrollment.UserId == userId))
+        //        .Select(community => new GetCommunityResponse
+        //        {
+        //            Id = community.Id,
+        //            Name = community.Name,
+        //            //Members = community.Members.Select(enrollment => enrollment.User).Select(UserModel.FromQuery)
+        //        })
+        //        .FirstOrDefaultAsync();
+
+        //    if (result == null)
+        //    {
+        //        return NotFound();
+        //    }
+
+        //    return Ok(result);
+        //}
+        
+
         //[HttpPost("{id}/join")]
         //public async Task<IActionResult> JoinGroup(int id)
         //{
@@ -81,8 +106,6 @@ namespace Loans.Controllers
         //        UserId = userId,
         //        CommunityId = id
         //    });
-
-
         //}
     }
 }

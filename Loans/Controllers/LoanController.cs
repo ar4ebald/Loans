@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Loans.DataTransferObjects;
 using Loans.DataTransferObjects.Loan;
 using Loans.DataTransferObjects.LoanSummary;
 using Loans.Extensions;

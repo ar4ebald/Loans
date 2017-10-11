@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq.Expressions;
 
-namespace Loans.DataTransferObjects.UsersGroup
+namespace Loans.DataTransferObjects.Community
 {
     public class CommunityViewModel
     {
