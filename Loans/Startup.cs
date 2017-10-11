@@ -33,13 +33,13 @@ namespace Loans
 
             ServiceProvider sp = services.BuildServiceProvider();
 
-            services.AddDbContext<LoansDbContext>(options =>
+            services.AddDbContext<LoansContext>(options =>
             {
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
             });
 
             services.AddIdentity<ApplicationUser, ApplicationRole>()
-                .AddEntityFrameworkStores<LoansDbContext>()
+                .AddEntityFrameworkStores<LoansContext>()
                 .AddDefaultTokenProviders();
 
             services.Configure<IdentityOptions>(options =>

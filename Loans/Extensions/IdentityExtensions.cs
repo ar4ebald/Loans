@@ -4,7 +4,7 @@ namespace Loans.Extensions
 {
     public static class IdentityExtensions
     {
-        public static int GetUserId(this ClaimsPrincipal user)
+        public static int GetIdentifier(this ClaimsPrincipal user)
         {
             if (user.Identity.IsAuthenticated)
             {

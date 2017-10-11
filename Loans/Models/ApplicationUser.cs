@@ -11,7 +11,7 @@ namespace Loans.Models
 
         public ICollection<Requisite> Requisites { get; set; }
 
-        public ICollection<UsersGroupEnrollment> Groups { get; set; }
+        public ICollection<CommunityEnrollment> CommunitiesEnrollments { get; set; }
 
         [InverseProperty("Debtor")]
         public ICollection<LoanSummary> Debts { get; set; }

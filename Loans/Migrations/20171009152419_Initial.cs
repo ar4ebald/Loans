@@ -52,7 +52,7 @@ namespace Loans.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "UsersGroups",
+                name: "Communities",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -61,7 +61,7 @@ namespace Loans.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_UsersGroups", x => x.Id);
+                    table.PrimaryKey("PK_Communities", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -216,23 +216,23 @@ namespace Loans.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "UsersGroupEnrollment",
+                name: "CommunitiesEnrollments",
                 columns: table => new
                 {
                     UserId = table.Column<int>(type: "int", nullable: false),
-                    GroupId = table.Column<int>(type: "int", nullable: false)
+                    CommunityId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_UsersGroupEnrollment", x => new { x.UserId, x.GroupId });
+                    table.PrimaryKey("PK_CommunitiesEnrollments", x => new { x.UserId, x.CommunityId });
                     table.ForeignKey(
-                        name: "FK_UsersGroupEnrollment_UsersGroups_GroupId",
-                        column: x => x.GroupId,
-                        principalTable: "UsersGroups",
+                        name: "FK_CommunitiesEnrollments_Communities_CommunityId",
+                        column: x => x.CommunityId,
+                        principalTable: "Communities",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_UsersGroupEnrollment_AspNetUsers_UserId",
+                        name: "FK_CommunitiesEnrollments_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
@@ -302,6 +302,11 @@ namespace Loans.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_CommunitiesEnrollments_CommunityId",
+                table: "CommunitiesEnrollments",
+                column: "CommunityId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Loans_SummaryCreditorId_SummaryDebtorId",
                 table: "Loans",
                 columns: new[] { "SummaryCreditorId", "SummaryDebtorId" });
@@ -315,11 +320,6 @@ namespace Loans.Migrations
                 name: "IX_Requisites_OwnerId",
                 table: "Requisites",
                 column: "OwnerId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_UsersGroupEnrollment_GroupId",
-                table: "UsersGroupEnrollment",
-                column: "GroupId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -340,22 +340,22 @@ namespace Loans.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "CommunitiesEnrollments");
+
+            migrationBuilder.DropTable(
                 name: "Loans");
 
             migrationBuilder.DropTable(
                 name: "Requisites");
 
             migrationBuilder.DropTable(
-                name: "UsersGroupEnrollment");
-
-            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "LoanSummaries");
+                name: "Communities");
 
             migrationBuilder.DropTable(
-                name: "UsersGroups");
+                name: "LoanSummaries");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

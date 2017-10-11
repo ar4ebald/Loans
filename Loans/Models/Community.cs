@@ -2,12 +2,12 @@
 
 namespace Loans.Models
 {
-    public class UsersGroup
+    public class Community
     {
         public int Id { get; set; }
 
         public string Name { get; set; }
 
-        public ICollection<UsersGroupEnrollment> Members { get; set; }
+        public ICollection<CommunityEnrollment> Members { get; set; }
     }
 }

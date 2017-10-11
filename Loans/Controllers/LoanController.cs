@@ -16,9 +16,9 @@ namespace Loans.Controllers
     [Route("api/[controller]")]
     public class LoanController : Controller
     {
-        private readonly LoansDbContext _context;
+        private readonly LoansContext _context;
 
-        public LoanController(LoansDbContext context)
+        public LoanController(LoansContext context)
         {
             _context = context;
         }
@@ -26,7 +26,7 @@ namespace Loans.Controllers
         [HttpGet("summary")]
         public async Task<LoanSummaryResponse> GetSummary()
         {
-            var userId = User.GetUserId();
+            var userId = User.GetIdentifier();
 
             var response = await _context.Users
                 .Where(user => user.Id == userId)
@@ -87,7 +87,7 @@ namespace Loans.Controllers
         [HttpGet("user/{id}")]
         public LoanHistoryResponse GetHistory(int id)
         {
-            var userId = User.GetUserId();
+            var userId = User.GetIdentifier();
 
             return new LoanHistoryResponse
             {
@@ -104,7 +104,7 @@ namespace Loans.Controllers
         [HttpPost("user/{creditorId}")]
         public async Task<IActionResult> CreateLoan(int creditorId, [FromBody]LoanCreateRequest model)
         {
-            var debtorId = User.GetUserId();
+            var debtorId = User.GetIdentifier();
 
             if (creditorId == debtorId)
             {

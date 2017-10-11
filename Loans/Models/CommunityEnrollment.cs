@@ -2,14 +2,14 @@
 
 namespace Loans.Models
 {
-    public class UsersGroupEnrollment
+    public class CommunityEnrollment
     {
         [Required]
         public ApplicationUser User { get; set; }
         public int UserId { get; set; }
 
         [Required]
-        public UsersGroup Group { get; set; }
-        public int GroupId { get; set; }
+        public Community Community { get; set; }
+        public int CommunityId { get; set; }
     }
 }

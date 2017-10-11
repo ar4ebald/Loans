@@ -3,14 +3,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Loans.Models
 {
-    public class LoansDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, int>
+    public class LoansContext : IdentityDbContext<ApplicationUser, ApplicationRole, int>
     {
-        public DbSet<UsersGroup> UsersGroups { get; set; }
+        public DbSet<Community> Communities { get; set; }
+        public DbSet<CommunityEnrollment> CommunitiesEnrollments { get; set; }
+
         public DbSet<Requisite> Requisites { get; set; }
+
         public DbSet<Loan> Loans { get; set; }
         public DbSet<LoanSummary> LoanSummaries { get; set; }
 
-        public LoansDbContext(DbContextOptions<LoansDbContext> options)
+        public LoansContext(DbContextOptions<LoansContext> options)
             : base(options)
         {
         }
@@ -36,10 +39,10 @@ namespace Loans.Models
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<UsersGroupEnrollment>().HasKey(enrollment => new
+            builder.Entity<CommunityEnrollment>().HasKey(enrollment => new
             {
                 enrollment.UserId,
-                enrollment.GroupId
+                GroupId = enrollment.CommunityId
             });
         }
     }

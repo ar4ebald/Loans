@@ -3,18 +3,14 @@ using Loans.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.EntityFrameworkCore.Storage.Internal;
 using System;
 
 namespace Loans.Migrations
 {
-    [DbContext(typeof(LoansDbContext))]
-    [Migration("20171007163536_Initial")]
-    partial class Initial
+    [DbContext(typeof(LoansContext))]
+    partial class LoansContextModelSnapshot : ModelSnapshot
     {
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -100,6 +96,31 @@ namespace Loans.Migrations
                     b.ToTable("AspNetUsers");
                 });
 
+            modelBuilder.Entity("Loans.Models.Community", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<string>("Name");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Communities");
+                });
+
+            modelBuilder.Entity("Loans.Models.CommunityEnrollment", b =>
+                {
+                    b.Property<int>("UserId");
+
+                    b.Property<int>("CommunityId");
+
+                    b.HasKey("UserId", "CommunityId");
+
+                    b.HasIndex("CommunityId");
+
+                    b.ToTable("CommunitiesEnrollments");
+                });
+
             modelBuilder.Entity("Loans.Models.Loan", b =>
                 {
                     b.Property<int>("Id")
@@ -151,31 +172,6 @@ namespace Loans.Migrations
                     b.HasIndex("OwnerId");
 
                     b.ToTable("Requisites");
-                });
-
-            modelBuilder.Entity("Loans.Models.UsersGroup", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<string>("Name");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("UsersGroups");
-                });
-
-            modelBuilder.Entity("Loans.Models.UsersGroupEnrollment", b =>
-                {
-                    b.Property<int>("UserId");
-
-                    b.Property<int>("GroupId");
-
-                    b.HasKey("UserId", "GroupId");
-
-                    b.HasIndex("GroupId");
-
-                    b.ToTable("UsersGroupEnrollment");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
@@ -259,6 +255,19 @@ namespace Loans.Migrations
                     b.ToTable("AspNetUserTokens");
                 });
 
+            modelBuilder.Entity("Loans.Models.CommunityEnrollment", b =>
+                {
+                    b.HasOne("Loans.Models.Community", "Community")
+                        .WithMany("Members")
+                        .HasForeignKey("CommunityId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Loans.Models.ApplicationUser", "User")
+                        .WithMany("CommunitiesEnrollments")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
             modelBuilder.Entity("Loans.Models.Loan", b =>
                 {
                     b.HasOne("Loans.Models.LoanSummary", "Summary")
@@ -285,19 +294,6 @@ namespace Loans.Migrations
                     b.HasOne("Loans.Models.ApplicationUser", "Owner")
                         .WithMany("Requisites")
                         .HasForeignKey("OwnerId")
-                        .OnDelete(DeleteBehavior.Cascade);
-                });
-
-            modelBuilder.Entity("Loans.Models.UsersGroupEnrollment", b =>
-                {
-                    b.HasOne("Loans.Models.UsersGroup", "Group")
-                        .WithMany("Members")
-                        .HasForeignKey("GroupId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.HasOne("Loans.Models.ApplicationUser", "User")
-                        .WithMany("Groups")
-                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 

@@ -33,7 +33,7 @@ namespace Loans.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<ValidationResultModel> Register([FromBody]RegisterViewModel model)
+        public async Task<IActionResult> Register([FromBody]RegisterViewModel model)
         {
             if (ModelState.IsValid)
             {
@@ -49,7 +49,7 @@ namespace Loans.Controllers
                 IdentityResult result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
-                    return ValidationResultModel.Success;
+                    return Ok(ValidationResultModel.Success);
                 }
 
                 foreach (IdentityError error in result.Errors)
@@ -58,7 +58,7 @@ namespace Loans.Controllers
                 }
             }
 
-            return new ValidationResultModel(ModelState);
+            return BadRequest(new ValidationResultModel(ModelState));
         }
 
         [HttpPost("token")]
