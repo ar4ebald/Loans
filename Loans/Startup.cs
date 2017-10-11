@@ -126,6 +126,8 @@ namespace Loans
                 app.UseExceptionHandler("/Home/Error");
             }
 
+            app.UseCors(buider => buider.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+
             app.UseStaticFiles();
 
             // Enable middleware to serve generated Swagger as a JSON endpoint.
@@ -149,6 +151,19 @@ namespace Loans
                     name: "spa-fallback",
                     defaults: new { controller = "Home", action = "Index" });
             });
+
+            MigrateDatabase(app);
+        }
+
+        private void MigrateDatabase(IApplicationBuilder app)
+        {
+            using (var scope = app.ApplicationServices.CreateScope())
+            {
+                using (var context = scope.ServiceProvider.GetService<LoansContext>())
+                {
+                    context.Database.Migrate();
+                }
+            }
         }
     }
 }
