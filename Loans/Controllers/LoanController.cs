@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Loans.DataTransferObjects;
 using Loans.DataTransferObjects.Loan;
 using Loans.DataTransferObjects.LoanSummary;
+using Loans.DataTransferObjects.User;
 using Loans.Extensions;
 using Loans.Models;
 using Microsoft.AspNetCore.Authorization;

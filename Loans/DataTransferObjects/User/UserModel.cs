@@ -2,7 +2,7 @@ using System;
 using System.Linq.Expressions;
 using Loans.Models;
 
-namespace Loans.DataTransferObjects
+namespace Loans.DataTransferObjects.User
 {
     public class UserModel
     {

@@ -1,4 +1,6 @@
-﻿namespace Loans.DataTransferObjects.LoanSummary
+﻿using Loans.DataTransferObjects.User;
+
+namespace Loans.DataTransferObjects.LoanSummary
 {
     public class LoanSummaryModel
     {
