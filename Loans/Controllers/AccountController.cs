@@ -12,11 +12,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Loans.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/account")]
     public class AccountController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -31,7 +30,10 @@ namespace Loans.Controllers
         /// <summary>
         /// Returns bearer token claims
         /// </summary>
-        [Authorize, HttpGet("current")]
+        /// <remarks>
+        /// This method is only for user's claims testing
+        /// </remarks>
+        [Authorize, HttpGet("claims")]
         public IActionResult GetCurrent()
         {
             return Json(User.Claims.Select(i => new { i.Type, i.Value }));
@@ -41,9 +43,9 @@ namespace Loans.Controllers
         /// Creates a new user
         /// </summary>
         /// <param name="model">New user view model</param>
-        [SwaggerResponse(StatusCodes.Status200OK)]
-        [SwaggerResponse(StatusCodes.Status400BadRequest)]
-        [HttpPost("register")]
+        /// <response code="200">Successfully registered</response>
+        /// <response code="400">Registration failed</response>
+        [HttpPost]
         public async Task<IActionResult> Register([FromBody]RegisterViewModel model)
         {
             if (ModelState.IsValid)
@@ -76,8 +78,14 @@ namespace Loans.Controllers
         /// Authenticates using specified credentials
         /// </summary>
         /// <param name="model">Credentials</param>
-        [SwaggerResponse(StatusCodes.Status200OK)]
-        [SwaggerResponse(StatusCodes.Status400BadRequest)]
+        /// <returns>Bearer token to be used in authenticated requests</returns>
+        /// <remarks>
+        /// To send authenticated requests you need to add Authentication header
+        /// with value "Bearer {token}"
+        /// </remarks>
+        /// <response code="200">Bearer token</response>
+        /// <response code="400">Invalid credentials</response>
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [HttpPost("token")]
         public async Task<IActionResult> GenerateToken(
             [FromServices] IOptions<JwtSettings> settings,

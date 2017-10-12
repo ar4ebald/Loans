@@ -2,19 +2,19 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Loans.DataTransferObjects.Community;
+using Loans.DataTransferObjects.User;
 using Loans.Extensions;
 using Loans.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Loans.Controllers
 {
     [Authorize]
     [Produces("application/json")]
-    [Route("api/[controller]")]
+    [Route("api/community")]
     public class CommunityController : Controller
     {
         private readonly LoansContext _context;
@@ -28,8 +28,8 @@ namespace Loans.Controllers
         /// Creates new community
         /// </summary>
         /// <param name="model">New community model</param>
-        [SwaggerResponse(StatusCodes.Status200OK)]
-        [SwaggerResponse(StatusCodes.Status400BadRequest)]
+        /// <response code="200">Successfully created</response>
+        /// <response code="400">Creation failed</response>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody]CreateCommunityViewModel model)
         {
@@ -56,55 +56,109 @@ namespace Loans.Controllers
         /// Returns communities that contains current user
         /// </summary>
         [HttpGet]
-        public Task<IEnumerable<CommunityViewModel>> GetPersonalCommunities()
+        public IEnumerable<CommunityViewModel> GetPersonalCommunities()
         {
             var userId = User.GetIdentifier();
 
-            return _context.Users
-                .Where(user => user.Id == userId)
-                .Select(user => user.CommunitiesEnrollments.Select(enrollment => new CommunityViewModel
+            return _context.CommunitiesEnrollments
+                .Where(enrollment => enrollment.UserId == userId)
+                .Select(enrollment => new CommunityViewModel
                 {
-                    Id = enrollment.CommunityId,
+                    Id = enrollment.Community.Id,
                     Name = enrollment.Community.Name
-                }))
-                .FirstOrDefaultAsync();
+                });
         }
 
-        //[HttpGet("{communityId}")]
-        //public async Task<IActionResult> Get(int communityId)
-        //{
-        //    var userId = User.GetIdentifier();
+        /// <summary>
+        /// Returns community information and members by identifier
+        /// </summary>
+        /// <param name="id">Requested community identifier</param>
+        /// <response code="200">Community information</response>
+        /// <response code="400">Invalid community or you are not a member of it</response>
+        [ProducesResponseType(typeof(GetCommunityResponse), StatusCodes.Status200OK)]
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(int id)
+        {
+            var userId = User.GetIdentifier();
 
-        //    var result = await _context.Communities
-        //        .Where(community => community.Id == communityId &&
-        //                            community.Members.Any(enrollment => enrollment.UserId == userId))
-        //        .Select(community => new GetCommunityResponse
-        //        {
-        //            Id = community.Id,
-        //            Name = community.Name,
-        //            //Members = community.Members.Select(enrollment => enrollment.User).Select(UserModel.FromQuery)
-        //        })
-        //        .FirstOrDefaultAsync();
+            var community = await _context.CommunitiesEnrollments
+                .Where(e => e.CommunityId == id && e.UserId == userId)
+                .Select(e => new GetCommunityResponse
+                {
+                    Id = e.Community.Id,
+                    Name = e.Community.Name
+                })
+                .FirstOrDefaultAsync();
 
-        //    if (result == null)
-        //    {
-        //        return NotFound();
-        //    }
+            if (community == null)
+            {
+                ModelState.AddModelError("Community", "Invalid community or you are not a member of it");
+                return NotFound();
+            }
 
-        //    return Ok(result);
-        //}
-        
+            community.Members = _context.CommunitiesEnrollments
+                .Where(e => e.CommunityId == community.Id)
+                .Select(e => e.User)
+                .Select(UserModel.FromQuery);
 
-        //[HttpPost("{id}/join")]
-        //public async Task<IActionResult> JoinGroup(int id)
-        //{
-        //    var userId = User.GetIdentifier();
+            return Ok(community);
+        }
 
-        //    await _context.CommunitiesEnrollments.AddAsync(new CommunityEnrollment
-        //    {
-        //        UserId = userId,
-        //        CommunityId = id
-        //    });
-        //}
+        /// <summary>
+        /// Joins specified community
+        /// </summary>
+        /// <param name="id">Community identifier</param>
+        /// <response code="200">Successfully joined</response>
+        /// <response code="400">Invalid community id or user is already a member of this community</response>
+        [HttpPost("{id}/join")]
+        public async Task<IActionResult> JoinCommunity(int id)
+        {
+            await _context.CommunitiesEnrollments.AddAsync(new CommunityEnrollment
+            {
+                UserId = User.GetIdentifier(),
+                CommunityId = id
+            });
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                ModelState.AddModelError("Join", "Invalid community or you are already a member of it");
+                return BadRequest(ModelState);
+            }
+
+
+            return Ok();
+        }
+
+        /// <summary>
+        /// Leaves specified community
+        /// </summary>
+        /// <param name="id">Community identifier</param>
+        /// <response code="200">Successfully left</response>
+        /// <response code="400">Invalid community or you have already left this community</response>
+        [HttpPost("{id}/leave")]
+        public async Task<IActionResult> LeaveCommunity(int id)
+        {
+            _context.CommunitiesEnrollments.Remove(new CommunityEnrollment
+            {
+                UserId = User.GetIdentifier(),
+                CommunityId = id
+            });
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                ModelState.AddModelError("Leave", "Invalid community or you have already left this community");
+                return BadRequest(ModelState);
+            }
+
+            return Ok();
+        }
     }
 }

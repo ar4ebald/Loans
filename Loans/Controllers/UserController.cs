@@ -12,7 +12,7 @@ namespace Loans.Controllers
 {
     [Authorize]
     [Produces("application/json")]
-    [Route("api/[controller]")]
+    [Route("api/user")]
     public class UserController : Controller
     {
         private readonly LoansContext _context;
@@ -22,7 +22,11 @@ namespace Loans.Controllers
             _context = context;
         }
 
-        [HttpGet("current")]
+        /// <summary>
+        /// Returns current user detailed information
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("self")]
         public Task<UserDetailedModel> GetCurrent()
         {
             var userId = User.GetIdentifier();
