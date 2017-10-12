@@ -5,6 +5,7 @@ using Loans.DataTransferObjects.User;
 using Loans.Extensions;
 using Loans.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,14 +26,26 @@ namespace Loans.Controllers
         /// <summary>
         /// Returns current user detailed information
         /// </summary>
-        /// <returns></returns>
+        /// <response code="200"></response>
+        /// <response code="404"></response>
+        [ProducesResponseType(typeof(UserDetailedModel), StatusCodes.Status200OK)]
         [HttpGet("self")]
-        public Task<UserDetailedModel> GetCurrent()
+        public Task<IActionResult> GetCurrent()
         {
-            var userId = User.GetIdentifier();
+            return Get(User.GetIdentifier());
+        }
 
-            return _context.Users
-                .Where(user => user.Id == userId)
+        /// <summary>
+        /// Returns user detailed information
+        /// </summary>
+        /// <response code="200"></response>
+        /// <response code="404"></response>
+        [ProducesResponseType(typeof(UserDetailedModel), StatusCodes.Status200OK)]
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(int id)
+        {
+            UserDetailedModel response = await _context.Users
+                .Where(user => user.Id == id)
                 .Select(user => new UserDetailedModel
                 {
                     Id = user.Id,
@@ -44,7 +57,15 @@ namespace Loans.Controllers
                         Description = requesite.Description
                     })
                 })
-                .SingleAsync();
+                .FirstOrDefaultAsync();
+
+            if (response == null)
+            {
+                ModelState.AddModelError("User", "Invalid user id");
+                return NotFound(ModelState);
+            }
+
+            return Ok(response);
         }
     }
 }
