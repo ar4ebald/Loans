@@ -1,5 +1,6 @@
 using System;
 using System.Linq.Expressions;
+using Loans.Extensions;
 using Loans.Models;
 
 namespace Loans.DataTransferObjects.User
@@ -11,7 +12,8 @@ namespace Loans.DataTransferObjects.User
             Id = user.Id,
             FirstName = user.FirstName,
             LastName = user.LastName,
-            UserName = user.UserName
+            UserName = user.UserName,
+            Email = user.Email
         };
 
         public int Id { get; set; }
@@ -21,5 +23,16 @@ namespace Loans.DataTransferObjects.User
         public string LastName { get; set; }
 
         public string UserName { get; set; }
+
+        public string Email { get; set; }
+
+        public string AvatarUri
+        {
+            get
+            {
+                string hash = Email.ToLowerInvariant().Hash();
+                return $"https://www.gravatar.com/avatar/{hash}.jpg?d=identicon";
+            }
+        }
     }
 }
