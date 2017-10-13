@@ -8,7 +8,7 @@ namespace Loans.DataTransferObjects.Account
         public string Email { get; set; }
 
         [Required, RegularExpression("^[a-z][a-z0-9_]{2,15}$")]
-        public string Nickname { get; set; }
+        public string UserName { get; set; }
 
         [Required, StringLength(16, MinimumLength = 1)]
         public string FirstName { get; set; }

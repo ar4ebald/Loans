@@ -10,7 +10,8 @@ namespace Loans.DataTransferObjects.User
         {
             Id = user.Id,
             FirstName = user.FirstName,
-            LastName = user.LastName
+            LastName = user.LastName,
+            UserName = user.UserName
         };
 
         public int Id { get; set; }
@@ -18,5 +19,7 @@ namespace Loans.DataTransferObjects.User
         public string FirstName { get; set; }
 
         public string LastName { get; set; }
+
+        public string UserName { get; set; }
     }
 }

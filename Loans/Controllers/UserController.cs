@@ -1,4 +1,7 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Threading.Tasks;
 using Loans.DataTransferObjects.Requisite;
 using Loans.DataTransferObjects.User;
@@ -6,8 +9,10 @@ using Loans.Extensions;
 using Loans.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Internal;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query.Expressions;
 
 namespace Loans.Controllers
 {
@@ -64,6 +69,41 @@ namespace Loans.Controllers
                 ModelState.AddModelError("User", "Invalid user id");
                 return NotFound(ModelState);
             }
+
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Search for users
+        /// </summary>
+        /// <param name="pattern">Search query</param>
+        /// <param name="offset">Amount of users to skip</param>
+        /// <param name="count">Amount of users to return</param>
+        /// <remarks>
+        /// Returns users that contains <paramref name="pattern"/> in their FirstName, LastName or UserName
+        /// </remarks>
+        [HttpGet("search")]
+        public async Task<IActionResult> Search(string pattern, int offset = 0, int count = 20)
+        {
+            IQueryable<ApplicationUser> users =  _context.Users;
+
+            if (!string.IsNullOrEmpty(pattern))
+            {
+                users = users.Where(u =>
+                    u.UserName.StartsWith(pattern) ||
+                    u.FirstName.StartsWith(pattern) ||
+                    u.LastName.StartsWith(pattern)
+                );
+            }
+
+            var response = new UserSearchResponse
+            {
+                Count = await users.CountAsync(),
+                Users = users.OrderBy(user => user.UserName)
+                    .Skip(Math.Max(0, offset))
+                    .Take(Math.Max(0, Math.Min(100, count)))
+                    .Select(UserModel.FromQuery)
+            };
 
             return Ok(response);
         }

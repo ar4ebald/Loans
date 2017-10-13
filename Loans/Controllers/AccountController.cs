@@ -52,7 +52,7 @@ namespace Loans.Controllers
             {
                 var user = new ApplicationUser
                 {
-                    UserName = model.Nickname,
+                    UserName = model.UserName,
                     Email = model.Email,
 
                     FirstName = model.FirstName,
