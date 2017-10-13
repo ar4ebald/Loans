@@ -104,7 +104,14 @@ namespace Loans.Controllers
             return Ok(response);
         }
 
-        [HttpPost("self/requisites")]
+
+        /// <summary>
+        /// Add requisite to current user
+        /// </summary>
+        /// <param name="model">New requisite model</param>
+        /// <response code="200">Successfully added</response>
+        
+        [HttpPost("self/requisite")]
         public async Task<IActionResult> AddRequisite([FromBody]RequisiteModel model)
         {
             var userId = User.GetIdentifier();
@@ -124,7 +131,12 @@ namespace Loans.Controllers
             return Ok();
         }
 
-
+        /// <summary>
+        /// Delete requisite by id for current user
+        /// </summary>
+        /// <param name="requisiteId">Id of requisite</param>
+        /// <response code="200">Successfully deleted</response>
+        
         [HttpDelete("self/requisite/{requisiteId}")]
         public async Task<IActionResult> DeleteRequisite(int requisiteId)
         {
