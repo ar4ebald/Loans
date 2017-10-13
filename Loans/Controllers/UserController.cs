@@ -52,10 +52,10 @@ namespace Loans.Controllers
                     Id = user.Id,
                     FirstName = user.FirstName,
                     LastName = user.LastName,
-                    Requisites = user.Requisites.Select(requesite => new RequisiteModel
+                    Requisites = user.Requisites.Select(requisite => new RequisiteModel
                     {
-                        Id = requesite.Id,
-                        Description = requesite.Description
+                        Id = requisite.Id,
+                        Description = requisite.Description
                     })
                 })
                 .FirstOrDefaultAsync();
@@ -104,20 +104,20 @@ namespace Loans.Controllers
             return Ok(response);
         }
 
-        [HttpPost("self/requesite")]
-        public async Task<IActionResult> AddRequesite([FromBody]RequisiteModel model)
+        [HttpPost("self/requisites")]
+        public async Task<IActionResult> AddRequisite([FromBody]RequisiteModel model)
         {
             var userId = User.GetIdentifier();
 
             var currentUser = await _context.Users.FirstOrDefaultAsync(user => user.Id == userId);
 
-            var newRequesite = new Requisite
+            var newRequisite = new Requisite
             {
                 Description = model.Description,
                 Owner = currentUser
             };
 
-            _context.Requisites.Add(newRequesite);
+            _context.Requisites.Add(newRequisite);
 
             await _context.SaveChangesAsync();
 
@@ -125,17 +125,17 @@ namespace Loans.Controllers
         }
 
 
-        [HttpDelete("self/requesite/{requesiteId}")]
-        public async Task<IActionResult> DeleteRequesite(int requesiteId)
+        [HttpDelete("self/requisite/{requisiteId}")]
+        public async Task<IActionResult> DeleteRequisite(int requisiteId)
         {
             var userId = User.GetIdentifier();
 
-            var currentRequesite = await _context.Requisites
-                .FirstOrDefaultAsync(requesite => requesite.Id == requesiteId && requesite.Owner.Id == userId);
+            var currentRequisite = await _context.Requisites
+                .FirstOrDefaultAsync(requisite => requisite.Id == requisiteId && requisite.Owner.Id == userId);
 
-            if (currentRequesite == null)
+            if (currentRequisite == null)
                 return NotFound();
-            _context.Requisites.Remove(currentRequesite);
+            _context.Requisites.Remove(currentRequisite);
 
             await _context.SaveChangesAsync();
 
