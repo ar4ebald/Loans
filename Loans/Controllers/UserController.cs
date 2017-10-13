@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using Loans.DataTransferObjects.Requisite;
@@ -9,10 +7,8 @@ using Loans.Extensions;
 using Loans.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Internal;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query.Expressions;
 
 namespace Loans.Controllers
 {
@@ -56,10 +52,10 @@ namespace Loans.Controllers
                     Id = user.Id,
                     FirstName = user.FirstName,
                     LastName = user.LastName,
-                    Requisites = user.Requisites.Select(requesite => new RequisiteModel
+                    Requisites = user.Requisites.Select(requisite => new RequisiteModel
                     {
-                        Id = requesite.Id,
-                        Description = requesite.Description
+                        Id = requisite.Id,
+                        Description = requisite.Description
                     })
                 })
                 .FirstOrDefaultAsync();
@@ -107,5 +103,44 @@ namespace Loans.Controllers
 
             return Ok(response);
         }
+
+        [HttpPost("self/requisites")]
+        public async Task<IActionResult> AddRequisite([FromBody]RequisiteModel model)
+        {
+            var userId = User.GetIdentifier();
+
+            var currentUser = await _context.Users.FirstOrDefaultAsync(user => user.Id == userId);
+
+            var newRequisite = new Requisite
+            {
+                Description = model.Description,
+                Owner = currentUser
+            };
+
+            _context.Requisites.Add(newRequisite);
+
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
+
+        [HttpDelete("self/requisite/{requisiteId}")]
+        public async Task<IActionResult> DeleteRequisite(int requisiteId)
+        {
+            var userId = User.GetIdentifier();
+
+            var currentRequisite = await _context.Requisites
+                .FirstOrDefaultAsync(requisite => requisite.Id == requisiteId && requisite.Owner.Id == userId);
+
+            if (currentRequisite == null)
+                return NotFound();
+            _context.Requisites.Remove(currentRequisite);
+
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
     }
 }
