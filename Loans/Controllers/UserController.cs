@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using Loans.DataTransferObjects.Requisite;
@@ -9,10 +7,8 @@ using Loans.Extensions;
 using Loans.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Internal;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query.Expressions;
 
 namespace Loans.Controllers
 {
@@ -107,5 +103,44 @@ namespace Loans.Controllers
 
             return Ok(response);
         }
+
+        [HttpPost("self/requesite")]
+        public async Task<IActionResult> AddRequesite([FromBody]RequisiteModel model)
+        {
+            var userId = User.GetIdentifier();
+
+            var currentUser = await _context.Users.FirstOrDefaultAsync(user => user.Id == userId);
+
+            var newRequesite = new Requisite
+            {
+                Description = model.Description,
+                Owner = currentUser
+            };
+
+            _context.Requisites.Add(newRequesite);
+
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
+
+        [HttpDelete("self/requesite/{requesiteId}")]
+        public async Task<IActionResult> DeleteRequesite(int requesiteId)
+        {
+            var userId = User.GetIdentifier();
+
+            var currentRequesite = await _context.Requisites
+                .FirstOrDefaultAsync(requesite => requesite.Id == requesiteId && requesite.Owner.Id == userId);
+
+            if (currentRequesite == null)
+                return NotFound();
+            _context.Requisites.Remove(currentRequesite);
+
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
     }
 }
