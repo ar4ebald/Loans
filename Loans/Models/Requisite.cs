@@ -9,6 +9,8 @@ namespace Loans.Models
         [Required]
         public ApplicationUser Owner { get; set; }
 
+        public int OwnerId { get; set; }
+
         public string Description { get; set; }
     }
 }

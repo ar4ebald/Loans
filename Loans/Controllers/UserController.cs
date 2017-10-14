@@ -79,7 +79,7 @@ namespace Loans.Controllers
         [HttpGet("search")]
         public async Task<IActionResult> Search(string pattern, int offset = 0, int count = 20)
         {
-            IQueryable<ApplicationUser> users =  _context.Users;
+            IQueryable<ApplicationUser> users = _context.Users;
 
             if (!string.IsNullOrEmpty(pattern))
             {
@@ -107,22 +107,37 @@ namespace Loans.Controllers
         /// Add requisite to current user
         /// </summary>
         /// <param name="model">New requisite model</param>
-        /// <response code="200">Successfully added</response>
-        
         [HttpPost("self/requisite")]
-        public async Task<IActionResult> AddRequisite()
+        public async Task AddRequisite([FromBody]CreateRequisiteRequest model)
         {
-            var userId = User.GetIdentifier();
-
-            var currentUser = await _context.Users.FirstOrDefaultAsync(user => user.Id == userId);
-
-            var newRequisite = new Requisite
+            await _context.Requisites.AddAsync(new Requisite
             {
                 Description = model.Description,
-                Owner = currentUser
-            };
+                OwnerId = User.GetIdentifier(),
+            });
 
-            _context.Requisites.Add(newRequisite);
+            await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Add requisite to current user
+        /// </summary>
+        /// <param name="id">Requisite identifier</param>
+        /// <param name="model">Requisite model</param>
+        /// <response code="200">Successfully updated</response>
+        /// <response code="404">Update failed</response>
+        [HttpPut("self/requisite/{id}")]
+        public async Task<IActionResult> UpdateRequisite(int id, [FromBody] CreateRequisiteRequest model)
+        {
+            var requisite = await _context.Requisites.FindAsync(id);
+
+            if (requisite == null || requisite.OwnerId != User.GetIdentifier())
+            {
+                ModelState.AddModelError("Update", "Specified requisite does not exist");
+                return NotFound(new SerializableError(ModelState));
+            }
+
+            requisite.Description = model.Description;
 
             await _context.SaveChangesAsync();
 
@@ -132,22 +147,27 @@ namespace Loans.Controllers
         /// <summary>
         /// Delete requisite by id for current user
         /// </summary>
-        /// <param name="requisiteId">Id of requisite</param>
+        /// <param name="id">Requisite identifier</param>
         /// <response code="200">Successfully deleted</response>
-        
-        [HttpDelete("self/requisite/{requisiteId}")]
-        public async Task<IActionResult> DeleteRequisite(int requisiteId)
+        /// <response code="404">Deletion failed</response>
+        [HttpDelete("self/requisite/{id}")]
+        public async Task<IActionResult> DeleteRequisite(int id)
         {
-            var userId = User.GetIdentifier();
+            _context.Requisites.Remove(new Requisite
+            {
+                Id = id,
+                OwnerId = User.GetIdentifier()
+            });
 
-            var currentRequisite = await _context.Requisites
-                .FirstOrDefaultAsync(requisite => requisite.Id == requisiteId && requisite.Owner.Id == userId);
-
-            if (currentRequisite == null)
-                return NotFound();
-            _context.Requisites.Remove(currentRequisite);
-
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                ModelState.AddModelError("Delete", "Specified requisite does not exist");
+                return NotFound(new SerializableError(ModelState));
+            }
 
             return Ok();
         }
