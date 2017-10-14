@@ -45,26 +45,24 @@ namespace Loans.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
-            UserDetailedModel response = await _context.Users
+            UserModel userModel = await _context.Users
                 .Where(user => user.Id == id)
-                .Select(user => new UserDetailedModel
-                {
-                    Id = user.Id,
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    Requisites = user.Requisites.Select(requisite => new RequisiteModel
-                    {
-                        Id = requisite.Id,
-                        Description = requisite.Description
-                    })
-                })
+                .Select(UserModel.FromQuery)
                 .FirstOrDefaultAsync();
 
-            if (response == null)
+            if (userModel == null)
             {
                 ModelState.AddModelError("User", "Invalid user id");
                 return NotFound(ModelState);
             }
+
+            var response = new UserDetailedModel
+            {
+                Info = userModel,
+                Requisites = _context.Requisites
+                    .Where(requisite => requisite.Owner.Id == userModel.Id)
+                    .Select(RequisiteModel.FromQuery)
+            };
 
             return Ok(response);
         }
@@ -112,7 +110,7 @@ namespace Loans.Controllers
         /// <response code="200">Successfully added</response>
         
         [HttpPost("self/requisite")]
-        public async Task<IActionResult> AddRequisite([FromBody]RequisiteModel model)
+        public async Task<IActionResult> AddRequisite()
         {
             var userId = User.GetIdentifier();
 
