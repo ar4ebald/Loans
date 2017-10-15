@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Loans.DataTransferObjects.Loan;
@@ -38,58 +39,51 @@ namespace Loans.Controllers
         {
             var userId = User.GetIdentifier();
 
-            var response = await _context.Users
-                .Where(user => user.Id == userId)
-                .Select(user => new LoanSummaryResponse
-                {
-                    Debts = user.Debts.Select(summary => new LoanSummaryModel
-                    {
-                        User = new UserModel
-                        {
-                            Id = user.Id,
-                            FirstName = user.FirstName,
-                            LastName = user.LastName
-                        },
-                        TotalAmount = summary.TotalAmount
-                    }),
-                    Credits = user.Credits.Select(summary => new LoanSummaryModel
-                    {
-                        User = new UserModel
-                        {
-                            Id = user.Id,
-                            FirstName = user.FirstName,
-                            LastName = user.LastName
-                        },
-                        TotalAmount = summary.TotalAmount
-                    })
-                })
-                .FirstOrDefaultAsync();
+            IQueryable<LoanSummary> summaries = _context.LoanSummaries
+                .Where(summary => summary.DebtorId == userId || summary.CreditorId == userId);
 
-            var creditsById = response.Credits.ToDictionary(i => i.User.Id);
+            var totals = new Dictionary<int, long>();
 
-            foreach (LoanSummaryModel summary in response.Debts)
+            await summaries.ForEachAsync(summary =>
             {
-                if (creditsById.TryGetValue(summary.User.Id, out var oldSummary))
-                {
-                    oldSummary.TotalAmount -= summary.TotalAmount;
-                }
-                else
-                {
-                    summary.TotalAmount = -summary.TotalAmount;
-                    creditsById.Add(summary.User.Id, summary);
-                }
-            }
+                var (otherId, amountToAdd) = summary.CreditorId == userId
+                    ? (summary.DebtorId, +summary.TotalAmount)
+                    : (summary.CreditorId, -summary.TotalAmount);
+
+                totals.TryGetValue(otherId, out long value);
+                totals[otherId] = value + amountToAdd;
+            });
+
+            IQueryable<UserModel> debtors = _context.LoanSummaries
+                .Where(summary => summary.CreditorId == userId)
+                .Select(summary => summary.Debtor)
+                .Select(UserModel.FromQuery);
+
+            IQueryable<UserModel> creditors = _context.LoanSummaries
+                .Where(summary => summary.DebtorId == userId)
+                .Select(summary => summary.Creditor)
+                .Select(UserModel.FromQuery);
+
+            Dictionary<int, UserModel> usersById = await debtors
+                .Union(creditors)
+                .ToDictionaryAsync(user => user.Id);
 
             return new LoanSummaryResponse
             {
-                Credits = creditsById.Values.Where(i => i.TotalAmount > 0),
-
-                Debts = creditsById.Values
-                    .Where(i => i.TotalAmount < 0)
-                    .Select(i =>
+                Credits = totals
+                    .Where(pair => pair.Value > 0)
+                    .Select(pair => new LoanSummaryModel
                     {
-                        i.TotalAmount = -i.TotalAmount;
-                        return i;
+                        User = usersById[pair.Key],
+                        TotalAmount = pair.Value
+                    }),
+
+                Debts = totals
+                    .Where(pair => pair.Value < 0)
+                    .Select(pair => new LoanSummaryModel
+                    {
+                        User = usersById[pair.Key],
+                        TotalAmount = -pair.Value
                     })
             };
         }
