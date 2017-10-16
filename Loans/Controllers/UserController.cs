@@ -120,7 +120,7 @@ namespace Loans.Controllers
         }
 
         /// <summary>
-        /// Add requisite to current user
+        /// Update requisite of current user
         /// </summary>
         /// <param name="id">Requisite identifier</param>
         /// <param name="model">Requisite model</param>
