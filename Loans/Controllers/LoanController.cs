@@ -104,8 +104,8 @@ namespace Loans.Controllers
                     .Select(LoanModel.Select),
 
                 Debts = _context.Loans
-                .Where(loan => loan.Summary.DebtorId == userId && loan.Summary.CreditorId == id)
-                .Select(LoanModel.Select)
+                    .Where(loan => loan.Summary.DebtorId == userId && loan.Summary.CreditorId == id)
+                    .Select(LoanModel.Select)
             };
         }
 
@@ -117,7 +117,7 @@ namespace Loans.Controllers
         /// <response code="200">Loan creation succeed</response>
         /// <response code="400">Loan creation failed</response>
         [HttpPost("user/{creditorId}")]
-        public async Task<IActionResult> CreateLoan(int creditorId, [FromBody]LoanCreateRequest model)
+        public async Task<IActionResult> CreateLoan(int creditorId, [FromBody] LoanCreateRequest model)
         {
             var debtorId = User.GetIdentifier();
 
