@@ -54,18 +54,18 @@ namespace Loans.Controllers
                 totals[otherId] = value + amountToAdd;
             });
 
-            IQueryable<UserModel> debtors = _context.LoanSummaries
+            var debtors = _context.LoanSummaries
                 .Where(summary => summary.CreditorId == userId)
-                .Select(summary => summary.Debtor)
-                .Select(UserModel.FromQuery);
+                .Select(summary => summary.Debtor);
 
-            IQueryable<UserModel> creditors = _context.LoanSummaries
+            var creditors = _context.LoanSummaries
                 .Where(summary => summary.DebtorId == userId)
-                .Select(summary => summary.Creditor)
-                .Select(UserModel.FromQuery);
+                .Select(summary => summary.Creditor);
 
             Dictionary<int, UserModel> usersById = await debtors
-                .Union(creditors)
+                .Concat(creditors)
+                .Distinct()
+                .Select(UserModel.FromQuery)
                 .ToDictionaryAsync(user => user.Id);
 
             return new LoanSummaryResponse
