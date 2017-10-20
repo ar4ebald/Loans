@@ -11,6 +11,9 @@ namespace Loans.Models
         public DbSet<Requisite> Requisites { get; set; }
 
         public DbSet<Loan> Loans { get; set; }
+
+        public DbSet<Invoice> Invoices { get; set; }
+
         public DbSet<LoanSummary> LoanSummaries { get; set; }
 
         public LoansContext(DbContextOptions<LoansContext> options)
