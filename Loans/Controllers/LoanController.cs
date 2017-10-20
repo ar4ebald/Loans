@@ -88,24 +88,6 @@ namespace Loans.Controllers
             };
         }
 
-        /// <summary>
-        /// Returns loan by id
-        /// </summary>
-        /// <param name="id">id of target loan</param>
-        [HttpGet("{id}")]
-        public LoanByIdResponse GetLoan(int id)
-        {
-            var target = _context.Loans.Single(loan => loan.Id == id);
-            return new LoanByIdResponse
-            {
-                Description = target.Description,
-                Amount = target.Amount,
-                Id = target.Id,
-                Time = target.Time,
-                CreditorId = target.Summary.CreditorId,
-                DebitorId = target.Summary.DebtorId
-            };
-        }
 
         /// <summary>
         /// Returns all transactions history between current and specified users
