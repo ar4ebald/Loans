@@ -31,6 +31,7 @@ namespace Loans
         public void ConfigureServices(IServiceCollection services)
         {
             services.Configure<JwtSettings>(Configuration.GetSection(nameof(JwtSettings)));
+            services.Configure<VKSettings>(Configuration.GetSection(nameof(VKSettings)));
 
             ServiceProvider sp = services.BuildServiceProvider();
 

@@ -26,13 +26,6 @@ namespace Loans.DataTransferObjects.User
 
         public string Email { get; set; }
 
-        public string AvatarUri
-        {
-            get
-            {
-                string hash = Email.ToLowerInvariant().Hash();
-                return $"https://www.gravatar.com/avatar/{hash}.jpg?d=identicon";
-            }
-        }
+        public string AvatarUri => $"/avatars/{Id}.jpg";
     }
 }

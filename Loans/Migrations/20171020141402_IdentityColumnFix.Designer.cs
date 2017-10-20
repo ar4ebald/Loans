@@ -11,9 +11,10 @@ using System;
 namespace Loans.Migrations
 {
     [DbContext(typeof(LoansContext))]
-    partial class LoansContextModelSnapshot : ModelSnapshot
+    [Migration("20171020141402_IdentityColumnFix")]
+    partial class IdentityColumnFix
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -46,7 +47,9 @@ namespace Loans.Migrations
 
             modelBuilder.Entity("Loans.Models.ApplicationUser", b =>
                 {
-                    b.Property<int>("Id");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<int>("AccessFailedCount");
 

@@ -4,6 +4,8 @@ namespace Loans.DataTransferObjects.Account
 {
     public class RegisterViewModel
     {
+        public int Id { get; set; }
+
         [Required, EmailAddress]
         public string Email { get; set; }
 

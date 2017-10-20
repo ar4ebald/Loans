@@ -1,15 +1,27 @@
 ﻿using System;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Reflection;
 using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
 using Loans.DataTransferObjects.Account;
+using Loans.Extensions;
 using Loans.Models;
+using Loans.Models.VK;
 using Loans.Options;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -39,6 +51,134 @@ namespace Loans.Controllers
             return Json(User.Claims.Select(i => new { i.Type, i.Value }));
         }
 
+        [HttpGet("authenticate")]
+        public async Task<IActionResult> Authenticate(
+            [FromServices]IServiceProvider services,
+            [FromServices]IHostingEnvironment env,
+            [FromServices]IOptions<VKSettings> vkSettings,
+            [FromServices]IOptions<JwtSettings> jwtSettings,
+            [FromQuery]string error,
+            [FromQuery(Name = "error_description")] string errorDescription,
+            [FromQuery]string code,
+            [FromQuery(Name = "redirect_uri")] string redirectUri)
+        {
+            VKSettings vk = vkSettings.Value;
+
+            if (code != null)
+            {
+                var client = await Client.AuthenticateFromCode(vk, code);
+                var userJson = (await client.PostAsync("users.get", ("fields", "screen_name,photo_max")))["response"][0];
+
+                var user = new ApplicationUser
+                {
+                    Id = userJson.Value<int>("id"),
+
+                    UserName = userJson.Value<string>("screen_name"),
+                    Email = client.Email,
+
+                    FirstName = userJson.Value<string>("first_name"),
+                    LastName = userJson.Value<string>("last_name")
+                };
+
+                // HAAAAAAAAAAAAAAAAAAAAAAAX
+                const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+                var store = (
+                    UserStore<
+                        ApplicationUser,
+                        ApplicationRole,
+                        LoansContext,
+                        int,
+                        IdentityUserClaim<int>,
+                        IdentityUserRole<int>,
+                        IdentityUserLogin<int>,
+                        IdentityUserToken<int>,
+                        IdentityRoleClaim<int>
+                    >)_userManager
+                    .GetType()
+                    .GetProperty("Store", flags)
+                    .GetValue(_userManager);
+
+                await store.Context.Database.OpenConnectionAsync();
+                IdentityResult result = null;
+                try
+                {
+                    store.Context.Database.ExecuteSqlCommand("SET IDENTITY_INSERT dbo.AspNetUsers ON");
+                    result = await _userManager.CreateAsync(user);
+                    store.Context.Database.ExecuteSqlCommand("SET IDENTITY_INSERT dbo.AspNetUsers OFF");
+                }
+                catch (InvalidOperationException)
+                {
+                    
+                }
+                finally
+                {
+                    store.Context.Database.CloseConnection();
+                }
+
+                if (result?.Succeeded == false)
+                {
+                    foreach (IdentityError err in result.Errors)
+                    {
+                        ModelState.AddModelError("Identity", err.Description);
+                    }
+
+                    return BadRequest(ModelState);
+                }
+
+                using (var webClient = new WebClient())
+                {
+                    await webClient.DownloadFileTaskAsync(
+                        userJson.Value<string>("photo_max"),
+                        Path.Combine(env.WebRootPath, "avatars", user.Id + ".jpg")
+                    );
+                }
+
+                Claim[] claims =
+                {
+                    new Claim(ClaimTypes.Name, user.UserName),
+                    new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                };
+
+                var creds = new SigningCredentials(
+                    jwtSettings.Value.SigningKey,
+                    SecurityAlgorithms.HmacSha256
+                );
+
+                var token = new JwtSecurityToken(
+                    jwtSettings.Value.ValidIssuer,
+                    jwtSettings.Value.ValidAudience,
+                    claims,
+                    expires: DateTime.Now.AddMinutes(30),
+                    signingCredentials: creds
+                );
+
+                string tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+
+                if (string.IsNullOrEmpty(redirectUri))
+                {
+                    return Ok(tokenString);
+                }
+
+                return Redirect(redirectUri + "?token=" + WebUtility.UrlEncode(tokenString));
+            }
+
+            if (error != null)
+            {
+                return BadRequest(new { error, errorDescription });
+            }
+
+            var uri = new StringBuilder("https://oauth.vk.com/authorize?response_type=code")
+                .AppendQuery("client_id", vk.ClientId)
+                .AppendQuery("display", vk.Display)
+                .AppendQuery("redirect_uri", vk.RedirectUri)
+                .AppendQuery("scope", vk.Scope)
+                .AppendQuery("v", vk.Scope)
+                .ToString();
+
+            return Redirect(uri);
+        }
+
         /// <summary>
         /// Creates a new user
         /// </summary>
@@ -52,6 +192,8 @@ namespace Loans.Controllers
             {
                 var user = new ApplicationUser
                 {
+                    Id = model.Id,
+
                     UserName = model.UserName,
                     Email = model.Email,
 
