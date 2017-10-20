@@ -42,6 +42,20 @@ namespace Loans.Models
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Restrict);
 
+            builder.Entity<Invoice>()
+                .HasOne(invoice => invoice.Creditor)
+                .WithMany()
+                .HasForeignKey(invoice => invoice.CreditorId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Invoice>()
+                .HasOne(invoice => invoice.Debtor)
+                .WithMany()
+                .HasForeignKey(invoice => invoice.DebtorId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
+
             builder.Entity<CommunityEnrollment>().HasKey(enrollment => new
             {
                 enrollment.UserId,

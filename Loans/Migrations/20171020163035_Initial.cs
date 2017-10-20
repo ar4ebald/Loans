@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using System;
+using System.Collections.Generic;
 
 namespace Loans.Migrations
 {
@@ -30,6 +31,7 @@ namespace Loans.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     AccessFailedCount = table.Column<int>(type: "int", nullable: false),
+                    AccessToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     EmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
@@ -171,6 +173,35 @@ namespace Loans.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Invoices",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    Amount = table.Column<long>(type: "bigint", nullable: false),
+                    CreditorId = table.Column<int>(type: "int", nullable: false),
+                    DebtorId = table.Column<int>(type: "int", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Time = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Invoices", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Invoices_AspNetUsers_CreditorId",
+                        column: x => x.CreditorId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Invoices_AspNetUsers_DebtorId",
+                        column: x => x.DebtorId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "LoanSummaries",
                 columns: table => new
                 {
@@ -307,6 +338,16 @@ namespace Loans.Migrations
                 column: "CommunityId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Invoices_CreditorId",
+                table: "Invoices",
+                column: "CreditorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Invoices_DebtorId",
+                table: "Invoices",
+                column: "DebtorId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Loans_SummaryCreditorId_SummaryDebtorId",
                 table: "Loans",
                 columns: new[] { "SummaryCreditorId", "SummaryDebtorId" });
@@ -341,6 +382,9 @@ namespace Loans.Migrations
 
             migrationBuilder.DropTable(
                 name: "CommunitiesEnrollments");
+
+            migrationBuilder.DropTable(
+                name: "Invoices");
 
             migrationBuilder.DropTable(
                 name: "Loans");

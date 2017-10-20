@@ -46,7 +46,8 @@ namespace Loans.Migrations
 
             modelBuilder.Entity("Loans.Models.ApplicationUser", b =>
                 {
-                    b.Property<int>("Id");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
 
                     b.Property<int>("AccessFailedCount");
 
@@ -123,6 +124,30 @@ namespace Loans.Migrations
                     b.HasIndex("CommunityId");
 
                     b.ToTable("CommunitiesEnrollments");
+                });
+
+            modelBuilder.Entity("Loans.Models.Invoice", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<long>("Amount");
+
+                    b.Property<int>("CreditorId");
+
+                    b.Property<int>("DebtorId");
+
+                    b.Property<string>("Description");
+
+                    b.Property<DateTimeOffset>("Time");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreditorId");
+
+                    b.HasIndex("DebtorId");
+
+                    b.ToTable("Invoices");
                 });
 
             modelBuilder.Entity("Loans.Models.Loan", b =>
@@ -270,6 +295,19 @@ namespace Loans.Migrations
                         .WithMany("CommunitiesEnrollments")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("Loans.Models.Invoice", b =>
+                {
+                    b.HasOne("Loans.Models.ApplicationUser", "Creditor")
+                        .WithMany()
+                        .HasForeignKey("CreditorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Loans.Models.ApplicationUser", "Debtor")
+                        .WithMany()
+                        .HasForeignKey("DebtorId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Loans.Models.Loan", b =>
