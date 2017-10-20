@@ -14,7 +14,7 @@ namespace Loans.Controllers
     [Authorize]
     [Produces("application/json")]
     [Route("api/invoice")]
-    public class InvoiceController:Controller
+    public class InvoiceController : Controller
     {
         private readonly LoansContext _context;
 
@@ -32,7 +32,7 @@ namespace Loans.Controllers
         /// <response code="200">Invoice creation succeed</response>
         /// <response code="400">Invoice creation failed</response>
         [HttpPost("user/{debtorId}")]
-        public async Task<IActionResult> CreateInvoice(int debtorId, [FromBody]InvoiceModel model)
+        public async Task<IActionResult> CreateInvoice(int debtorId, [FromBody]InvoiceCreateRequest model)
         {
             var creditorId = User.GetIdentifier();
 
@@ -65,18 +65,63 @@ namespace Loans.Controllers
         /// <summary>
         /// Returns all invoice history between current and specified users
         /// </summary>
-        /// <param name="id">Target user id</param>
-        [HttpGet("user/{id}")]
-        public InvoiceHistoryResponse GetHistory(int id)
+        [HttpGet("user")]
+        public InvoiceHistoryResponse GetHistory()
         {
             var userId = User.GetIdentifier();
 
             return new InvoiceHistoryResponse
             {
                 Invoices = _context.Invoices
-                    .Where(invoice => invoice.DebtorId == userId && invoice.CreditorId == id)
+                    .Where(invoice => invoice.DebtorId == userId)
                     .Select(InvoiceModel.Select)
             };
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="controller"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPost("accept/{id}")]
+        public async Task<IActionResult> AcceptInvoice([FromServices]LoanController controller, int id)
+        {
+            var userId = User.GetIdentifier();
+
+            var currentInvoice = await _context.Invoices.SingleAsync(invoice => invoice.Id == id);
+
+            _context.Invoices.Remove(currentInvoice);
+
+            var targetId = currentInvoice.CreditorId;
+
+            await controller.CreateLoan(targetId, new LoanCreateRequest
+            {
+                Amount = currentInvoice.Amount,
+                Description = currentInvoice.Description,
+                Time = currentInvoice.Time
+            });
+            
+            return Ok();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPost("decline/{id}")]
+        public async Task<IActionResult> DeclineInvoice(int id)
+        {
+            var userId = User.GetIdentifier();
+
+            var currentInvoice = await _context.Invoices.SingleAsync(invoice => invoice.Id == id);
+
+            _context.Invoices.Remove(currentInvoice);
+
+            await _context.SaveChangesAsync();
+
+            return Ok();
         }
     }
 }
