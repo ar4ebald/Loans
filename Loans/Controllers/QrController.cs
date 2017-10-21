@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+﻿using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -16,7 +17,7 @@ namespace Loans.Controllers
         [HttpGet("get")]
         public async Task<string> GetReceipt([FromQuery] QueryParam param)
         {
-            string uri = $"http://brand.cash/v1/receipts/get{HttpContext.Request.QueryString}";
+            string uri = $"http://brand.cash/v1/receipts/get?{WebUtility.UrlDecode(param.qr)}";
 
             using (var http = new HttpClient())
             {
@@ -28,16 +29,6 @@ namespace Loans.Controllers
     public class QueryParam
     {
         [BindRequired]
-        public string t { get; set; }
-
-        public string s { get; set; }
-
-        public string fn { get; set; }
-
-        public string i { get; set; }
-
-        public string fp { get; set; }
-
-        public string n { get; set; }
+        public string qr { get; set; }
     }
 }
