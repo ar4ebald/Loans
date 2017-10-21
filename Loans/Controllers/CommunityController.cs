@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Loans.DataTransferObjects.Community;
 using Loans.DataTransferObjects.User;
@@ -113,7 +114,7 @@ namespace Loans.Controllers
             if (!string.IsNullOrEmpty(pattern))
             {
                 communities = communities
-                    .Where(u =>u.Name.StartsWith(pattern));
+                    .Where(u => u.Name.StartsWith(pattern));
             }
 
             var response = new CommunitySearchResponse
@@ -186,13 +187,14 @@ namespace Loans.Controllers
             return Ok();
         }
 
-
-        [HttpPost("{id}/optimize")]
-        public async Task<IActionResult> OptimizeOperations(int id)
+        [HttpPost("{id}/graph")]
+        public async Task<string> GetGraph(int id)
         {
             IQueryable<ApplicationUser> users = _context.CommunitiesEnrollments
                 .Where(e => e.CommunityId == id)
                 .Select(e => e.User);
+
+            //IQueryable<ApplicationUser> users = _context.Users;
 
             var edges = await _context.LoanSummaries.Join(
                 users,
@@ -203,10 +205,162 @@ namespace Loans.Controllers
                 users,
                 summary => summary.DebtorId,
                 user => user.Id,
-                (summary, user) => new { summary.CreditorId, summary.DebtorId, summary.TotalAmount }
+                (summary, user) => new
+                {
+                    Creditor = summary.Creditor.UserName,
+                    Debtor = summary.Debtor.UserName,
+                    summary.TotalAmount
+                }
             ).ToListAsync();
 
-            return Ok();
+
+            var dict = new Dictionary<(string creditor, string debtor), long>();
+
+            foreach (var edge in edges)
+            {
+                long total = edge.TotalAmount;
+
+                if (dict.TryGetValue((edge.Debtor, edge.Creditor), out long amount))
+                {
+                    total -= amount;
+                    dict.Remove((edge.Debtor, edge.Creditor));
+                }
+
+                if (total > 0)
+                {
+                    dict[(edge.Creditor, edge.Debtor)] = total;
+                }
+                else if (total < 0)
+                {
+                    dict[(edge.Debtor, edge.Creditor)] = -total;
+                }
+            }
+
+            return $"digraph G {{\n{string.Join("\n", dict.Select(e => $"{e.Key.debtor} -> {e.Key.creditor}  [ label = \"{e.Value}\" ]"))}\n}}\n";
+        }
+
+        [HttpPost("{id}/optimize")]
+        public async Task<IActionResult> OptimizeOperations(int id)
+        {
+            IQueryable<ApplicationUser> users = _context.CommunitiesEnrollments
+                .Where(e => e.CommunityId == id)
+                .Select(e => e.User);
+
+            //IQueryable<ApplicationUser> users = _context.Users;
+
+            var edges = (await _context.LoanSummaries.Join(
+                    users,
+                    summary => summary.CreditorId,
+                    user => user.Id,
+                    (summary, user) => summary
+                ).Join(
+                    users,
+                    summary => summary.DebtorId,
+                    user => user.Id,
+                    (summary, user) => new
+                    {
+                        Debtor = summary.DebtorId,
+                        Creditor = summary.CreditorId,
+                        summary.TotalAmount
+                    }
+                ).ToListAsync())
+                .Select(edge => (debtor: edge.Debtor, creditor: edge.Creditor, amount: edge.TotalAmount))
+                .ToArray();
+
+            var ids = edges
+                .Select(e => e.debtor).Concat(edges.Select(e => e.creditor))
+                .Distinct()
+                .ToArray();
+
+            var ind = ids
+                .Select((value, index) => (value, index))
+                .ToDictionary(i => i.value, i => i.index);
+
+            var graph = new long[ind.Count, ind.Count];
+
+            ref long g(int i, int j)
+            {
+                if (i > j)
+                {
+                    (i, j) = (j, i);
+                }
+
+                return ref graph[i, j];
+            }
+
+            void add(int i, int j, long value)
+            {
+                if (i < j)
+                    graph[i, j] += value;
+                else
+                    graph[j, i] -= value;
+            }
+
+            foreach (var (debtor, creditor, amount) in edges)
+            {
+                add(ind[debtor], ind[creditor], amount);
+            }
+
+            bool found;
+            do
+            {
+                found = false;
+
+                for (int i = 0; i < ind.Count; ++i)
+                {
+                    for (int j = 0; j < ind.Count; ++j)
+                    {
+                        var (v1, v2, amountIn) = (i, j, g(i, j));
+
+                        if (amountIn <= 0)
+                        {
+                            continue;
+                        }
+
+                        for (int k = 0; k < ind.Count; ++k)
+                        {
+                            var (v3, amountOut) = (k, g(v2, k));
+
+                            if (amountOut <= 0)
+                            {
+                                continue;
+                            }
+
+                            long amount = Math.Min(amountIn, amountOut);
+
+                            add(v1, v2, -amount);
+                            add(v2, v3, -amount);
+                            add(v1, v3, amount);
+
+                            found = true;
+                        }
+                    }
+                }
+            } while (found);
+
+            var sb = new StringBuilder("digraph G {").AppendLine();
+            for (int i = 0; i < ind.Count; ++i)
+            {
+                for (int j = i + 1; j < ind.Count; ++j)
+                {
+                    var (u, v, w) = (ids[i], ids[j], graph[i, j]);
+
+                    if (w == 0)
+                    {
+                        continue;
+                    }
+
+                    if (w < 0)
+                    {
+                        (u, v, w) = (v, u, -w);
+                    }
+
+                    sb.AppendLine($"{u} -> {v} [ label = \"{w}\" ]");
+                }
+            }
+            sb.AppendLine("}");
+
+            return Ok(sb.ToString());
         }
     }
 }
