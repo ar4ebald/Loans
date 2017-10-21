@@ -60,13 +60,18 @@ namespace Loans.Controllers
             [FromQuery]string error,
             [FromQuery(Name = "error_description")] string errorDescription,
             [FromQuery]string code,
+            [FromQuery]string token,
+            [FromQuery]string email,
             [FromQuery]string state)
         {
             VKSettings vk = vkSettings.Value;
 
-            if (code != null)
+            if (!string.IsNullOrEmpty(code) || !string.IsNullOrEmpty(token) && !string.IsNullOrEmpty(email))
             {
-                var client = await Client.AuthenticateFromCode(vk, code);
+                Client client = string.IsNullOrEmpty(code)
+                    ? new Client(token, vk.Version, email)
+                    : await Client.AuthenticateFromCode(vk, code);
+
                 var userJson = (await client.PostAsync("users.get", ("fields", "screen_name,photo_max")))["response"][0];
 
                 var user = new ApplicationUser
@@ -145,7 +150,7 @@ namespace Loans.Controllers
                     SecurityAlgorithms.HmacSha256
                 );
 
-                var token = new JwtSecurityToken(
+                var jwtToken = new JwtSecurityToken(
                     jwtSettings.Value.ValidIssuer,
                     jwtSettings.Value.ValidAudience,
                     claims,
@@ -153,7 +158,7 @@ namespace Loans.Controllers
                     signingCredentials: creds
                 );
 
-                string tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+                string tokenString = new JwtSecurityTokenHandler().WriteToken(jwtToken);
 
                 if (string.IsNullOrEmpty(state))
                 {
