@@ -312,7 +312,7 @@ namespace Loans.Controllers
                     {
                         var (v1, v2, amountIn) = (i, j, g(i, j));
 
-                        if (amountIn <= 0)
+                        if (v1 == v2 || amountIn <= 0)
                         {
                             continue;
                         }
@@ -321,7 +321,7 @@ namespace Loans.Controllers
                         {
                             var (v3, amountOut) = (k, g(v2, k));
 
-                            if (amountOut <= 0)
+                            if (v3 == v1 || v3 == v2 || amountOut <= 0)
                             {
                                 continue;
                             }
