@@ -14,7 +14,7 @@ namespace Loans.Controllers
         /// </summary>
         /// <param name="param">params from receipt</param>
         /// <returns></returns>
-        [HttpGet("get")]
+        [HttpGet("get"), Produces("application/json")]
         public async Task<string> GetReceipt([FromQuery] QueryParam param)
         {
             string uri = $"http://brand.cash/v1/receipts/get?{WebUtility.UrlDecode(param.qr)}";
