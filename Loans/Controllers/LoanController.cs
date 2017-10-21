@@ -102,10 +102,12 @@ namespace Loans.Controllers
             {
                 Credits = _context.Loans
                     .Where(loan => loan.Summary.CreditorId == userId && loan.Summary.DebtorId == id)
+                    .OrderByDescending(loan => loan.Time)
                     .Select(LoanModel.Select),
 
                 Debts = _context.Loans
                     .Where(loan => loan.Summary.DebtorId == userId && loan.Summary.CreditorId == id)
+                    .OrderByDescending(loan => loan.Time)
                     .Select(LoanModel.Select)
             };
         }

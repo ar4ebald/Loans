@@ -160,5 +160,28 @@ namespace Loans.Controllers
 
             return Ok();
         }
+
+
+        [HttpPost("{id}/optimize")]
+        public async Task<IActionResult> OptimizeOperations(int id)
+        {
+            IQueryable<ApplicationUser> users = _context.CommunitiesEnrollments
+                .Where(e => e.CommunityId == id)
+                .Select(e => e.User);
+
+            var edges = await _context.LoanSummaries.Join(
+                users,
+                summary => summary.CreditorId,
+                user => user.Id,
+                (summary, user) => summary
+            ).Join(
+                users,
+                summary => summary.DebtorId,
+                user => user.Id,
+                (summary, user) => new { summary.CreditorId, summary.DebtorId, summary.TotalAmount }
+            ).ToListAsync();
+
+            return Ok();
+        }
     }
 }
