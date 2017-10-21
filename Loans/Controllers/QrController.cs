@@ -11,8 +11,13 @@ namespace Loans.Controllers
     [Route("receipts")]
     public class QrController : Controller
     {
+        /// <summary>
+        /// Returns items from receipt
+        /// </summary>
+        /// <param name="param">params from receipt</param>
+        /// <returns></returns>
         [HttpGet("get")]
-        public async Task<string> GetReciept([FromQuery] QueryParam param)
+        public async Task<string> GetReceipt([FromQuery] QueryParam param)
         {
             string uri = $"http://brand.cash/v1/receipts/get{HttpContext.Request.QueryString}";
 
