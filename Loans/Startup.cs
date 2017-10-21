@@ -20,6 +20,8 @@ namespace Loans
 {
     public class Startup
     {
+        public static string Domain { get; private set; }
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -30,6 +32,8 @@ namespace Loans
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            Domain = Configuration["DomainName"];
+
             services.Configure<JwtSettings>(Configuration.GetSection(nameof(JwtSettings)));
             services.Configure<VKSettings>(Configuration.GetSection(nameof(VKSettings)));
 

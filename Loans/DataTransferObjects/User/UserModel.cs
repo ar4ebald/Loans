@@ -26,6 +26,6 @@ namespace Loans.DataTransferObjects.User
 
         public string Email { get; set; }
 
-        public string AvatarUri => $"/avatars/{Id}.jpg";
+        public string AvatarUri => $"{Startup.Domain}/avatars/{Id}.jpg";
     }
 }

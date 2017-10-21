@@ -14,7 +14,7 @@ namespace Loans.Extensions
             sb.Append(first ? '?' : '&')
                 .Append(WebUtility.UrlEncode(key))
                 .Append('=')
-                .Append(WebUtility.UrlEncode(value.ToString()));
+                .Append(WebUtility.UrlEncode(value?.ToString() ?? ""));
 
             return sb;
         }

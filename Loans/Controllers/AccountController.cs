@@ -60,7 +60,7 @@ namespace Loans.Controllers
             [FromQuery]string error,
             [FromQuery(Name = "error_description")] string errorDescription,
             [FromQuery]string code,
-            [FromQuery(Name = "redirect_uri")] string redirectUri)
+            [FromQuery]string state)
         {
             VKSettings vk = vkSettings.Value;
 
@@ -108,7 +108,7 @@ namespace Loans.Controllers
                 }
                 catch (InvalidOperationException)
                 {
-                    
+
                 }
                 finally
                 {
@@ -155,12 +155,12 @@ namespace Loans.Controllers
 
                 string tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
-                if (string.IsNullOrEmpty(redirectUri))
+                if (string.IsNullOrEmpty(state))
                 {
                     return Ok(tokenString);
                 }
 
-                return Redirect(redirectUri + "?token=" + WebUtility.UrlEncode(tokenString));
+                return Redirect(state + "?token=" + WebUtility.UrlEncode(tokenString));
             }
 
             if (error != null)
@@ -174,6 +174,7 @@ namespace Loans.Controllers
                 .AppendQuery("redirect_uri", vk.RedirectUri)
                 .AppendQuery("scope", vk.Scope)
                 .AppendQuery("v", vk.Scope)
+                .AppendQuery("state", state)
                 .ToString();
 
             return Redirect(uri);
