@@ -4,8 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Loans.DataTransferObjects.Community;
+using Loans.DataTransferObjects.Loan;
 using Loans.DataTransferObjects.User;
 using Loans.Extensions;
+using Loans.Helpers;
 using Loans.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -240,7 +242,7 @@ namespace Loans.Controllers
         }
 
         [HttpPost("{id}/optimize")]
-        public async Task<IActionResult> OptimizeOperations(int id)
+        public async Task<IActionResult> OptimizeOperations([FromServices] LoanHelper helper, int id)
         {
             IQueryable<ApplicationUser> users = _context.CommunitiesEnrollments
                 .Where(e => e.CommunityId == id)
@@ -301,6 +303,8 @@ namespace Loans.Controllers
                 add(ind[debtor], ind[creditor], amount);
             }
 
+            var oldGraph = (long[,])graph.Clone();
+
             bool found;
             do
             {
@@ -338,29 +342,45 @@ namespace Loans.Controllers
                 }
             } while (found);
 
-            var sb = new StringBuilder("digraph G {").AppendLine();
+            var description = "Optimization fix";
+            var time = DateTimeOffset.UtcNow;
+
             for (int i = 0; i < ind.Count; ++i)
             {
                 for (int j = i + 1; j < ind.Count; ++j)
                 {
-                    var (u, v, w) = (ids[i], ids[j], graph[i, j]);
+                    long change = graph[i, j] - oldGraph[i, j];
 
-                    if (w == 0)
+                    if (change == 0)
                     {
                         continue;
                     }
 
-                    if (w < 0)
+                    var (debtorId, creditorId) = (ids[i], ids[j]);
+
+                    if (change < 0)
                     {
-                        (u, v, w) = (v, u, -w);
+                        (debtorId, creditorId, change) = (creditorId, debtorId, -change);
                     }
 
-                    sb.AppendLine($"{u} -> {v} [ label = \"{w}\" ]");
+                    var result = await helper.TryCreateLoan(debtorId, creditorId, new LoanCreateRequest
+                    {
+                        Time = time,
+                        Description = description,
+                        Amount = change
+                    });
+
+                    if (!result.Success)
+                    {
+                        ModelState.AddModelError(result.Error, result.ErrorDescription);
+                        return BadRequest(ModelState);
+                    }
                 }
             }
-            sb.AppendLine("}");
 
-            return Ok(sb.ToString());
+            await _context.SaveChangesAsync();
+
+            return Ok();
         }
     }
 }

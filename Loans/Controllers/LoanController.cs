@@ -6,6 +6,7 @@ using Loans.DataTransferObjects.Loan;
 using Loans.DataTransferObjects.LoanSummary;
 using Loans.DataTransferObjects.User;
 using Loans.Extensions;
+using Loans.Helpers;
 using Loans.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -120,51 +121,21 @@ namespace Loans.Controllers
         /// <response code="200">Loan creation succeed</response>
         /// <response code="400">Loan creation failed</response>
         [HttpPost("user/{creditorId}")]
-        public async Task<IActionResult> CreateLoan(int creditorId, [FromBody] LoanCreateRequest model)
+        public async Task<IActionResult> CreateLoan(
+            [FromServices] LoanHelper helper,
+            int creditorId,
+            [FromBody] LoanCreateRequest model)
         {
-            var debtorId = User.GetIdentifier();
+            var result = await helper.TryCreateLoan(User.GetIdentifier(), creditorId, model);
 
-            if (creditorId == debtorId)
+            if (result.Success)
             {
-                ModelState.AddModelError("Debtor", "You can't create a credit to yourself");
-                return BadRequest(ModelState);
+                await _context.SaveChangesAsync();
+                return Ok();
             }
 
-            if (await _context.Users.AllAsync(user => user.Id != creditorId))
-            {
-                ModelState.AddModelError("Creditor", "Invalid creditor");
-                return BadRequest(ModelState);
-            }
-
-            LoanSummary summary = await _context.LoanSummaries
-                .FirstOrDefaultAsync(i =>
-                    i.CreditorId == creditorId && i.DebtorId == debtorId
-                );
-
-            if (summary == null)
-            {
-                summary = new LoanSummary
-                {
-                    CreditorId = creditorId,
-                    DebtorId = debtorId
-                };
-
-                await _context.LoanSummaries.AddAsync(summary);
-            }
-
-            summary.TotalAmount += model.Amount;
-
-            _context.Loans.Add(new Loan
-            {
-                Summary = summary,
-                Amount = model.Amount,
-                Time = DateTimeOffset.Now,
-                Description = model.Description,
-            });
-
-            await _context.SaveChangesAsync();
-
-            return Ok();
+            ModelState.AddModelError(result.Error, result.ErrorDescription);
+            return BadRequest(ModelState);
         }
     }
 }

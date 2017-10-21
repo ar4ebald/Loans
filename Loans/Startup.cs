@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using Loans.Helpers;
 using Loans.Models;
 using Loans.Options;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -36,6 +37,8 @@ namespace Loans
 
             services.Configure<JwtSettings>(Configuration.GetSection(nameof(JwtSettings)));
             services.Configure<VKSettings>(Configuration.GetSection(nameof(VKSettings)));
+
+            services.AddScoped<LoanHelper>();
 
             ServiceProvider sp = services.BuildServiceProvider();
 
