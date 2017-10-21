@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Loans.DataTransferObjects.Community;
@@ -103,6 +104,30 @@ namespace Loans.Controllers
 
             return Ok(community);
         }
+
+        [HttpGet("search")]
+        public async Task<IActionResult> Search(string pattern, int offset = 0, int count = 20)
+        {
+            IQueryable<Community> communities = _context.Communities;
+
+            if (!string.IsNullOrEmpty(pattern))
+            {
+                communities = communities
+                    .Where(u =>u.Name.StartsWith(pattern));
+            }
+
+            var response = new CommunitySearchResponse
+            {
+                Count = await communities.CountAsync(),
+                Communities = communities.OrderBy(communuty => communuty.Name)
+                    .Skip(Math.Max(0, offset))
+                    .Take(Math.Max(0, Math.Min(100, count)))
+                    .Select(CommunityViewModel.FromQuery)
+            };
+
+            return Ok(response);
+        }
+
 
         /// <summary>
         /// Joins specified community
