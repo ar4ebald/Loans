@@ -7,7 +7,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Loans.Controllers
 {
-    [Route("receipts")]
+    [Route("api/receipts")]
     public class QrController : Controller
     {
         /// <summary>

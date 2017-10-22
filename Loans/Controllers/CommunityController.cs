@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,6 +12,7 @@ using Loans.Extensions;
 using Loans.Helpers;
 using Loans.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -189,8 +192,8 @@ namespace Loans.Controllers
             return Ok();
         }
 
-        [HttpPost("{id}/graph")]
-        public async Task<string> GetGraph(int id)
+        [HttpGet("{id}/graph")]
+        public async Task<IActionResult> GetGraph([FromServices]IHostingEnvironment env, int id)
         {
             IQueryable<ApplicationUser> users = _context.CommunitiesEnrollments
                 .Where(e => e.CommunityId == id)
@@ -238,7 +241,37 @@ namespace Loans.Controllers
                 }
             }
 
-            return $"digraph G {{\n{string.Join("\n", dict.Select(e => $"{e.Key.debtor} -> {e.Key.creditor}  [ label = \"{e.Value}\" ]"))}\n}}\n";
+            var exe = Path.Combine(env.ContentRootPath, "graphviz", "dot.exe");
+
+            string graph = $"digraph G {{\n" +
+                           //$"fontpath=\"{Path.GetDirectoryName(exe)}\"\n" +
+                           //$"fontname=\"roboto\"\n" +
+                           $"{string.Join("\n", dict.Select(e => $"{e.Key.debtor} -> {e.Key.creditor}  [ label = \"{e.Value}\" ]"))}\n" +
+                           $"}}\n";
+
+            return Ok(graph);
+
+            var file = Path.GetTempFileName();
+            try
+            {
+                await System.IO.File.WriteAllTextAsync(file, graph);
+
+                var p = Process.Start(new ProcessStartInfo(exe, $"-Tpng \"{file}\"")
+                {
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true
+                });
+
+                using (var mem = new MemoryStream())
+                {
+                    await p.StandardOutput.BaseStream.CopyToAsync(mem);
+                    return File(mem.ToArray(), "image/png");
+                }
+            }
+            finally
+            {
+                System.IO.File.Delete(file);
+            }
         }
 
         [HttpPost("{id}/optimize")]

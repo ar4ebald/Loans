@@ -54,8 +54,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Properties\PublishProfiles\Default Settings.pubxml" />
-    <None Remove="Properties\PublishProfiles\tinkoff-loans - Web Deploy.pubxml" />
+    <Content Include="graphviz\**" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
