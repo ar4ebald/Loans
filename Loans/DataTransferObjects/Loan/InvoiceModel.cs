@@ -13,10 +13,16 @@ namespace Loans.DataTransferObjects.Loan
             Id = loan.Id,
             Time = loan.Time,
             Description = loan.Description,
-            Amount = loan.Amount
+            Amount = loan.Amount,
+            DebtorId = loan.DebtorId,
+            CreditorId = loan.CreditorId
         };
 
         public int Id { get; set; }
+
+        public int CreditorId { get; set; }
+
+        public int DebtorId { get; set; }
 
         public long Amount { get; set; }
 
